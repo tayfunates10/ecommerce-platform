@@ -1,5 +1,6 @@
 export type InventoryErrorCode =
   | "INVALID_QUANTITY"
+  | "INVALID_STATE"
   | "OUT_OF_STOCK"
   | "RESERVATION_UNDERFLOW";
 
@@ -18,14 +19,29 @@ export type InventoryState = Readonly<{
   reserved: number;
 }>;
 
+function assertInventoryState(state: InventoryState): void {
+  const validQuantity = Number.isSafeInteger(state.quantity) && state.quantity >= 0;
+  const validReserved = Number.isSafeInteger(state.reserved) && state.reserved >= 0;
+
+  if (!validQuantity || !validReserved || state.reserved > state.quantity) {
+    throw new InventoryError(
+      "Inventory state must contain non-negative safe integers with reserved not exceeding quantity.",
+      "INVALID_STATE",
+    );
+  }
+}
+
 export function availableStock(state: InventoryState): number {
-  return Math.max(0, state.quantity - state.reserved);
+  assertInventoryState(state);
+  return state.quantity - state.reserved;
 }
 
 export function reserveInventory(
   state: InventoryState,
   requested: number,
 ): InventoryState {
+  assertInventoryState(state);
+
   if (!Number.isSafeInteger(requested) || requested <= 0) {
     throw new InventoryError(
       "Reservation quantity must be a positive safe integer.",
@@ -47,6 +63,8 @@ export function releaseInventory(
   state: InventoryState,
   released: number,
 ): InventoryState {
+  assertInventoryState(state);
+
   if (!Number.isSafeInteger(released) || released <= 0) {
     throw new InventoryError(
       "Release quantity must be a positive safe integer.",
