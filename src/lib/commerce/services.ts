@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { buildOrderRequestFingerprint, normalizeIdempotencyKey } from "./order-idempotency";
 import { cartSubtotalMinor, normalizeCurrency } from "./pricing";
@@ -88,8 +89,8 @@ export async function createOrderFromCart(input: {
   idempotencyKey: string;
   email: string;
   locale: "TR" | "EN" | "DE";
-  shippingData: Record<string, unknown>;
-  billingData: Record<string, unknown>;
+  shippingData: Prisma.InputJsonObject;
+  billingData: Prisma.InputJsonObject;
   customerId?: string | null;
 }) {
   const key = normalizeIdempotencyKey(input.idempotencyKey);
