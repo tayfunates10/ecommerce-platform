@@ -13,6 +13,8 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecommerce?schema=public
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,6 +34,12 @@ jobs:
           path: package-lock.json
           if-no-files-found: error
           retention-days: 1
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Validate Prisma schema
+        run: npm run db:validate
 
       - name: Lint
         run: npm run lint
