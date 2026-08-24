@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CartButton } from "@/components/storefront/cart-ui";
 import type { Locale } from "@/i18n/config";
 
 const labels: Record<Locale, { home: string; products: string; languages: string }> = {
@@ -28,19 +29,22 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           <Link href={`/${locale}/products`}>{copy.products}</Link>
         </nav>
 
-        <nav className="locale-nav" aria-label={copy.languages}>
-          {(Object.keys(languageNames) as Locale[]).map((targetLocale) => (
-            <Link
-              key={targetLocale}
-              href={`/${targetLocale}`}
-              hrefLang={targetLocale}
-              lang={targetLocale}
-              aria-current={targetLocale === locale ? "page" : undefined}
-            >
-              {languageNames[targetLocale]}
-            </Link>
-          ))}
-        </nav>
+        <div className="site-header__actions">
+          <nav className="locale-nav" aria-label={copy.languages}>
+            {(Object.keys(languageNames) as Locale[]).map((targetLocale) => (
+              <Link
+                key={targetLocale}
+                href={`/${targetLocale}`}
+                hrefLang={targetLocale}
+                lang={targetLocale}
+                aria-current={targetLocale === locale ? "page" : undefined}
+              >
+                {languageNames[targetLocale]}
+              </Link>
+            ))}
+          </nav>
+          <CartButton locale={locale} />
+        </div>
       </div>
     </header>
   );
