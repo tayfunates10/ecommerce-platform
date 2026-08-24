@@ -11,7 +11,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Active PR:** #4
 - **Completion after this phase is verified and merged:** 41%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
-- **Latest verified CI evidence:** run #11 passed on commit `f70f098`; the branch has since added transactional cart/order persistence and concurrency-safe inventory reservation, so a fresh CI run on the new HEAD is required before merge.
+- **Latest CI evidence:** run #13 on commit `52d64f6` failed at TypeScript typecheck because `Record<string, unknown>` was not assignable to Prisma JSON input fields. Commit `a231d94` fixes the contract by typing checkout JSON payloads as `Prisma.InputJsonObject`. A fresh final-HEAD CI run is required before merge.
 
 ## Roadmap and weights
 
@@ -85,22 +85,23 @@ Implemented on `commerce/core-services`:
 - Serializable order transaction boundary.
 - Concurrency-safe inventory reservation using one atomic conditional PostgreSQL UPDATE per variant; insufficient stock causes transaction rollback.
 - Cart clearing only after order creation succeeds inside the same transaction.
+- Prisma-compatible JSON input contracts for shipping and billing checkout payloads.
 - Automated tests covering stock, pricing and idempotency behavior.
 - Node 22 TypeScript stripping enabled for zero-dependency domain tests.
 
 ### Latest Phase 4 CI evidence
 
-CI run #11 on commit `f70f098` completed successfully:
+CI run #13 on commit `52d64f6`:
 
 - Dependency installation: **PASS**
 - Prisma Client generation: **PASS**
 - Prisma schema validation: **PASS**
 - ESLint: **PASS**
-- TypeScript typecheck: **PASS**
-- Commerce tests: **PASS**
-- Production build: **PASS**
+- TypeScript typecheck: **FAIL** — checkout JSON payload types were too broad (`Record<string, unknown>`).
+- Commerce tests: **SKIPPED** after typecheck failure
+- Production build: **SKIPPED** after typecheck failure
 
-The branch now contains additional transactional persistence code after that successful run. Therefore the final Phase 4 gates remain unverified until CI passes again on the current HEAD.
+Fix applied in commit `a231d94`: `shippingData` and `billingData` now use `Prisma.InputJsonObject`, matching generated Prisma Client input contracts. Final Phase 4 gates remain unverified until CI passes on the new HEAD.
 
 ### Required Phase 4 gates
 
