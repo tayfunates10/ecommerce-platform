@@ -11,7 +11,8 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Active PR:** #4
 - **Completion after this phase is verified and merged:** 41%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
-- **Latest CI evidence:** run #13 on commit `52d64f6` failed at TypeScript typecheck because `Record<string, unknown>` was not assignable to Prisma JSON input fields. Commit `a231d94` fixes the contract by typing checkout JSON payloads as `Prisma.InputJsonObject`. A fresh final-HEAD CI run is required before merge.
+- **Latest verified CI evidence:** run #15 on commit `a1e6b8f` passed dependency installation, Prisma Client generation, Prisma schema validation, ESLint, TypeScript typecheck, commerce tests and production build.
+- **Current review status:** CI #15 was green, but merge was intentionally blocked by unresolved review defects covering corrupt inventory state validation and unsupported currency acceptance. Commits `1c31109`, `f341c40` and `e5a0d22` implement fail-closed inventory validation, an explicit supported ISO-4217 currency set (`TRY`, `EUR`, `USD`) and regression tests. A fresh final-HEAD CI run is required before merge.
 
 ## Roadmap and weights
 
@@ -75,9 +76,10 @@ Implemented on `commerce/core-services`:
 
 - Inventory availability calculation.
 - Fail-closed inventory reservation and release rules.
+- Fail-closed validation for persisted inventory state: quantity/reserved must be non-negative safe integers and reserved cannot exceed quantity.
 - Integer minor-unit pricing helpers to avoid floating-point money errors.
 - Cart line/subtotal calculation with safe-integer overflow protection.
-- ISO-4217 alpha-3 currency normalization.
+- Explicit supported ISO-4217 currency contract for `TRY`, `EUR` and `USD`; arbitrary three-letter codes are rejected.
 - Order idempotency key validation and deterministic request fingerprint contract.
 - Database-backed cart item mutation inside a transaction with product, price and available-stock validation.
 - Transactional order creation from persisted cart state.
@@ -86,22 +88,33 @@ Implemented on `commerce/core-services`:
 - Concurrency-safe inventory reservation using one atomic conditional PostgreSQL UPDATE per variant; insufficient stock causes transaction rollback.
 - Cart clearing only after order creation succeeds inside the same transaction.
 - Prisma-compatible JSON input contracts for shipping and billing checkout payloads.
-- Automated tests covering stock, pricing and idempotency behavior.
-- Node 22 TypeScript stripping enabled for zero-dependency domain tests.
+- Automated tests covering stock, corrupt persisted inventory state, pricing, supported currencies and idempotency behavior.
+- Node 22 TypeScript stripping enabled for zero-dependency domain tests with erasable TypeScript syntax.
 
 ### Latest Phase 4 CI evidence
 
-CI run #13 on commit `52d64f6`:
+CI run #15 on commit `a1e6b8f`:
 
 - Dependency installation: **PASS**
 - Prisma Client generation: **PASS**
 - Prisma schema validation: **PASS**
 - ESLint: **PASS**
-- TypeScript typecheck: **FAIL** — checkout JSON payload types were too broad (`Record<string, unknown>`).
-- Commerce tests: **SKIPPED** after typecheck failure
-- Production build: **SKIPPED** after typecheck failure
+- TypeScript typecheck: **PASS**
+- Commerce tests: **PASS**
+- Production build: **PASS**
 
-Fix applied in commit `a231d94`: `shippingData` and `billingData` now use `Prisma.InputJsonObject`, matching generated Prisma Client input contracts. Final Phase 4 gates remain unverified until CI passes on the new HEAD.
+Review after CI #15 found two merge blockers that CI did not cover:
+
+1. corrupt persisted inventory state could overstate availability when `reserved` was negative or otherwise invalid;
+2. arbitrary three-letter currency codes such as `ABC` could pass the ISO-4217-shaped validation.
+
+Fixes now applied on the branch:
+
+- `1c31109`: validates persisted inventory state and throws `INVALID_STATE` before availability/reservation/release calculations;
+- `f341c40`: constrains runtime currency normalization to supported ISO-4217 codes `TRY`, `EUR`, `USD`;
+- `e5a0d22`: adds regression tests for negative/oversubscribed/fractional inventory state and invalid currency codes.
+
+A fresh CI run must pass on the new final HEAD before the review gate can be considered satisfied.
 
 ### Required Phase 4 gates
 
@@ -114,7 +127,8 @@ Fix applied in commit `a231d94`: `shippingData` and `billingData` now use `Prism
 - [ ] Production build passes on final Phase 4 HEAD
 - [x] Database-backed cart/order transaction services complete
 - [x] Concurrency-safe inventory transaction path complete
-- [ ] PR review/diff has no blocking defect
+- [x] Review blockers identified on CI #15 have code fixes and regression coverage
+- [ ] PR review/diff has no unresolved blocking defect on final HEAD
 - [ ] Phase 4 PR merged to `main`
 
 Only after every item above is satisfied will this README report **41% verified / 59% remaining**.
