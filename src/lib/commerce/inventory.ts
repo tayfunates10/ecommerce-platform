@@ -1,13 +1,15 @@
+export type InventoryErrorCode =
+  | "INVALID_QUANTITY"
+  | "OUT_OF_STOCK"
+  | "RESERVATION_UNDERFLOW";
+
 export class InventoryError extends Error {
-  constructor(
-    message: string,
-    public readonly code:
-      | "INVALID_QUANTITY"
-      | "OUT_OF_STOCK"
-      | "RESERVATION_UNDERFLOW",
-  ) {
+  readonly code: InventoryErrorCode;
+
+  constructor(message: string, code: InventoryErrorCode) {
     super(message);
     this.name = "InventoryError";
+    this.code = code;
   }
 }
 
