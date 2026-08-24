@@ -8,8 +8,10 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Remaining on `main`: 75%**
 - **Current phase:** Product/cart/inventory/order commerce core
 - **Current branch:** `commerce/core-services`
+- **Active PR:** #4
 - **Completion after this phase is verified and merged:** 41%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
+- **Latest CI state:** run #9 failed at the commerce test step because Node 22 strip-only TypeScript does not support parameter properties; commit `6b85f78` replaced that syntax with an explicit readonly field. A fresh CI run is required before the failing gate can be considered cleared.
 
 ## Roadmap and weights
 
@@ -18,7 +20,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 1. Requirements + architecture decisions | 5% | ✅ Complete |
 | 2. Repository foundation + Next.js + CI/CD | 7% | ✅ Complete — PR #2 merged |
 | 3. PostgreSQL + data model + backend | 13% | ✅ Complete — PR #3 merged |
-| 4. Product/cart/inventory/order commerce core | 16% | 🟡 In progress |
+| 4. Product/cart/inventory/order commerce core | 16% | 🟡 In progress — PR #4 |
 | 5. UI/UX + responsive storefront | 14% | ⏳ Pending |
 | 6. TR/EN/DE + technical SEO | 14% | ⏳ Pending |
 | 7. Media + Core Web Vitals | 10% | ⏳ Pending |
@@ -80,16 +82,31 @@ Implemented so far on `commerce/core-services`:
 - Deterministic order request fingerprint contract.
 - Automated tests covering stock, pricing and idempotency behavior.
 - Node 22 TypeScript stripping enabled for zero-dependency domain tests.
+- CI compatibility fix for unsupported TypeScript parameter-property syntax.
+
+### Latest Phase 4 CI evidence
+
+CI run #9 reached the test gate with these results:
+
+- Dependency installation: **PASS**
+- Prisma Client generation: **PASS**
+- Prisma schema validation: **PASS**
+- ESLint: **PASS**
+- TypeScript typecheck: **PASS**
+- Commerce tests: **FAIL** due to unsupported parameter-property syntax in Node 22 strip-only mode
+- Production build: **SKIPPED** because tests failed first
+
+The syntax failure is fixed on the PR branch, but **the gate remains unverified until a new CI run passes**.
 
 ### Required Phase 4 gates
 
-- [ ] Dependency installation succeeds
-- [ ] Prisma Client generation succeeds
-- [ ] Prisma schema validation succeeds
-- [ ] Commerce core tests pass
-- [ ] ESLint passes with zero warnings
-- [ ] TypeScript typecheck passes
-- [ ] Production build passes
+- [ ] Dependency installation succeeds on final Phase 4 HEAD
+- [ ] Prisma Client generation succeeds on final Phase 4 HEAD
+- [ ] Prisma schema validation succeeds on final Phase 4 HEAD
+- [ ] Commerce core tests pass on final Phase 4 HEAD
+- [ ] ESLint passes with zero warnings on final Phase 4 HEAD
+- [ ] TypeScript typecheck passes on final Phase 4 HEAD
+- [ ] Production build passes on final Phase 4 HEAD
 - [ ] Database-backed cart/order transaction services complete
 - [ ] Concurrency-safe inventory transaction path complete
 - [ ] PR review/diff has no blocking defect
