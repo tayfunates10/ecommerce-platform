@@ -4,15 +4,15 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 
 ## Canonical project status
 
-- **Verified completion on `main`: 41%**
-- **Remaining on `main`: 59%**
-- **Current phase:** UI/UX + responsive storefront
-- **Current branch:** `storefront/responsive-foundation`
-- **Active PR:** #5
-- **Completion after this phase is verified and merged:** 55%
+- **Verified completion on `main`: 55%**
+- **Remaining on `main`: 45%**
+- **Current phase:** TR/EN/DE + technical SEO
+- **Current branch:** `seo/i18n-foundation`
+- **Active PR:** Phase 6 PR
+- **Completion after this phase is verified and merged:** 69%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
-- **Latest verified CI evidence:** Phase 5 baseline CI run #21 passed on commit `063f575e`; the expanded storefront HEAD requires fresh final CI.
-- **Latest verified merge:** PR #4 merged to `main` as commit `321fc03`.
+- **Latest verified CI evidence:** Phase 5 final CI run #37 passed on commit `44ec27fc`.
+- **Latest verified merge:** PR #5 merged to `main` as commit `5946c36d`.
 
 ## Roadmap and weights
 
@@ -22,13 +22,13 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 2. Repository foundation + Next.js + CI/CD | 7% | ✅ Complete — PR #2 merged |
 | 3. PostgreSQL + data model + backend | 13% | ✅ Complete — PR #3 merged |
 | 4. Product/cart/inventory/order commerce core | 16% | ✅ Complete — PR #4 merged |
-| 5. UI/UX + responsive storefront | 14% | 🟡 Completion candidate; final CI/review pending |
-| 6. TR/EN/DE + technical SEO | 14% | ⏳ Pending |
+| 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged after CI #37 |
+| 6. TR/EN/DE + technical SEO | 14% | 🟡 In progress |
 | 7. Media + Core Web Vitals | 10% | ⏳ Pending |
 | 8. Checkout + security + analytics | 10% | ⏳ Pending |
 | 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
 | 10. Production certification + release | 4% | ⏳ Pending |
-| **Total** | **100%** | **41% verified** |
+| **Total** | **100%** | **55% verified** |
 
 ## Completed phases
 
@@ -38,58 +38,57 @@ Merged in PR #2 after dependency installation, ESLint, TypeScript typecheck, fou
 ### Phase 3 — PostgreSQL + data model + backend
 Merged in PR #3 after Prisma Client generation, Prisma schema validation, lint, typecheck, domain tests and production build passed.
 
-Delivered: Prisma ORM 7.9.1 PostgreSQL architecture, product/variant/category translations, pricing, inventory, customer, address, cart, order, payment, shipment, promotion, media and localized SEO persistence contracts.
-
 ### Phase 4 — Product/cart/inventory/order commerce core
 Merged in PR #4 after final CI run #19 passed and all review threads were resolved.
 
-Delivered fail-closed inventory rules, integer minor-unit pricing, currency validation, idempotency, database-backed cart mutations, Serializable transactional order creation and atomic conditional PostgreSQL stock reservation.
+### Phase 5 — UI/UX + responsive storefront
+Merged in PR #5 after final CI run #37 passed and review blockers were resolved.
 
-## Phase 5 — UI/UX + responsive storefront
+Delivered: accessible responsive storefront shell, real database-backed product listing/detail read model, localized TR/EN/DE navigation, stock-aware purchase controls, cart drawer interactions, responsive safeguards and honest empty states.
 
-Active branch: `storefront/responsive-foundation`.
+## Phase 6 — TR/EN/DE + technical SEO
 
-Implemented:
+Active branch: `seo/i18n-foundation`.
 
-- accessible sticky storefront header;
-- primary navigation and TR/EN/DE language navigation;
-- locale-aware global footer;
-- responsive homepage hero and conversion CTA;
-- fluid spacing/typography with mobile/tablet/desktop layouts and no overflow masking;
-- database-backed ACTIVE product read model with locale translation, preferred currency, media, price and available-stock projection;
-- honest zero-product state when no database/product data exists;
-- reusable responsive product cards using real product data;
-- dynamic localized product detail page and purchase panel;
-- stock-aware Add to Cart control;
-- accessible cart trigger and modal drawer with Escape/backdrop close behavior;
-- cart quantity, remove and subtotal interactions;
-- skip-link, focus-visible and reduced-motion safeguards;
-- fail-safe build behavior when `DATABASE_URL` is absent (catalog remains empty rather than fabricating products).
+Implemented so far:
 
-### Required Phase 5 gates
+- shared production site URL / absolute URL SEO helpers;
+- localized canonical URL construction;
+- reciprocal TR/EN/DE hreflang plus `x-default` helpers;
+- locale-layout metadata base, canonical, alternates and Open Graph metadata;
+- production `robots.ts` policy with sitemap declaration;
+- localized dynamic sitemap for home, products and active product URLs;
+- localized product metadata generated from real product data;
+- Product JSON-LD with SKU, brand, image, Offer price/currency/availability from the same product read model;
+- JSON-LD `<` escaping to avoid script-breakout injection.
 
-- [ ] Dependency installation passes on final Phase 5 HEAD
-- [ ] Prisma Client generation/validation passes on final Phase 5 HEAD
+### Required Phase 6 gates
+
+- [ ] Dependency installation passes on final Phase 6 HEAD
+- [ ] Prisma Client generation/validation passes
 - [ ] ESLint passes with zero warnings
 - [ ] TypeScript typecheck passes
 - [ ] Tests pass
 - [ ] Production build passes
-- [x] Responsive navigation structure implemented for mobile/tablet/desktop widths
-- [x] Product card + real product data integration completed
-- [x] Product detail purchase UI completed
-- [x] Cart drawer / cart interaction UX completed
-- [ ] Accessibility review has no blocking defect
+- [x] Localized canonical URL foundation
+- [x] Reciprocal TR/EN/DE hreflang + x-default foundation
+- [x] robots policy + sitemap endpoint
+- [x] Product structured data foundation using real commerce data
+- [ ] ProductGroup/variant structured data where multiple sellable variants exist
+- [ ] Category/product SEO templates completed
+- [ ] Merchant Center-compatible product feed/data contract
+- [ ] Crawl/indexation quality tests
 - [ ] PR review/diff has no unresolved blocking defect
-- [ ] Phase 5 PR merged to `main`
+- [ ] Phase 6 PR merged to `main`
 
-Only after every required Phase 5 gate is satisfied will this README report **55% verified / 45% remaining**.
+Only after every required Phase 6 gate is satisfied will this README report **69% verified / 31% remaining**.
 
 ## Progress reporting rule
 
 Every implementation phase must update this README with completed work, tests/CI results, PR/review/merge state, verified completion percentage, remaining percentage and the next planned phase.
 
-## Next phase after Phase 5
+## Next phase after Phase 6
 
-**Phase 6 — TR/EN/DE + technical SEO (14%)**
+**Phase 7 — Media + Core Web Vitals (10%)**
 
-Planned scope: localized metadata, canonical/hreflang reciprocity, Product/ProductGroup structured data, sitemap architecture, robots policy, category/product SEO templates, Merchant Center-compatible product data contracts and crawl/indexation quality gates.
+Planned scope: responsive AVIF/WebP image delivery, media budgets, video loading strategy, font and LCP hardening, script/DOM budgets, RUM hooks and automated Core Web Vitals regression gates.
