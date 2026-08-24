@@ -8,6 +8,7 @@ import { CartProvider } from "@/components/storefront/cart-provider";
 import { SiteFooter } from "@/components/storefront/site-footer";
 import { SiteHeader } from "@/components/storefront/site-header";
 import { isLocale, locales } from "@/i18n/config";
+import { absoluteUrl, localeAlternates, localizedPath, siteName, siteUrl } from "@/lib/seo";
 
 const descriptions = {
   tr: "Hızlı, güvenli ve çok dilli yeni nesil e-ticaret deneyimi.",
@@ -28,12 +29,25 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
 
   return {
+    metadataBase: new URL(siteUrl),
     title: {
-      default: "Ecommerce Platform",
-      template: "%s | Ecommerce Platform",
+      default: siteName,
+      template: `%s | ${siteName}`,
     },
     description: descriptions[locale],
+    alternates: {
+      canonical: absoluteUrl(localizedPath(locale)),
+      languages: localeAlternates(),
+    },
     robots: { index: true, follow: true },
+    openGraph: {
+      type: "website",
+      siteName,
+      locale,
+      url: absoluteUrl(localizedPath(locale)),
+      title: siteName,
+      description: descriptions[locale],
+    },
   };
 }
 
