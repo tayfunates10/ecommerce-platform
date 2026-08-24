@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import "../globals.css";
+import { SiteFooter } from "@/components/storefront/site-footer";
+import { SiteHeader } from "@/components/storefront/site-header";
 import { isLocale, locales } from "@/i18n/config";
 
 const descriptions = {
@@ -48,7 +50,9 @@ export default async function LocaleLayout({
         <a className="skip-link" href="#main-content">
           {locale === "tr" ? "İçeriğe geç" : locale === "de" ? "Zum Inhalt" : "Skip to content"}
         </a>
+        <SiteHeader locale={locale} />
         {children}
+        <SiteFooter locale={locale} />
       </body>
     </html>
   );
