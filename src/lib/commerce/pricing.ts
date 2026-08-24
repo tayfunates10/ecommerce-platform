@@ -1,6 +1,10 @@
+export const SUPPORTED_CURRENCIES = ["TRY", "EUR", "USD"] as const;
+
+export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
+
 export type Money = Readonly<{
   amountMinor: number;
-  currency: string;
+  currency: SupportedCurrency;
 }>;
 
 export type CartLineInput = Readonly<{
@@ -8,18 +12,22 @@ export type CartLineInput = Readonly<{
   quantity: number;
 }>;
 
+const SUPPORTED_CURRENCY_SET = new Set<string>(SUPPORTED_CURRENCIES);
+
 function assertMinorAmount(value: number): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new RangeError("Money amount must be a non-negative safe integer.");
   }
 }
 
-export function normalizeCurrency(currency: string): string {
+export function normalizeCurrency(currency: string): SupportedCurrency {
   const value = currency.trim().toUpperCase();
-  if (!/^[A-Z]{3}$/.test(value)) {
-    throw new TypeError("Currency must be an ISO-4217 alpha-3 code.");
+  if (!SUPPORTED_CURRENCY_SET.has(value)) {
+    throw new TypeError(
+      `Currency must be one of the supported ISO-4217 codes: ${SUPPORTED_CURRENCIES.join(", ")}.`,
+    );
   }
-  return value;
+  return value as SupportedCurrency;
 }
 
 export function lineTotalMinor(line: CartLineInput): number {
