@@ -11,6 +11,7 @@ import {
   cartSubtotalMinor,
   lineTotalMinor,
   money,
+  normalizeCurrency,
 } from "../src/lib/commerce/pricing.ts";
 import {
   buildOrderRequestFingerprint,
@@ -31,6 +32,20 @@ test("inventory reserves only available stock and releases safely", () => {
   );
 });
 
+test("inventory fails closed on corrupt persisted state", () => {
+  for (const state of [
+    { quantity: 10, reserved: -1 },
+    { quantity: -1, reserved: 0 },
+    { quantity: 2, reserved: 3 },
+    { quantity: 1.5, reserved: 0 },
+  ]) {
+    assert.throws(
+      () => availableStock(state),
+      (error) => error instanceof InventoryError && error.code === "INVALID_STATE",
+    );
+  }
+});
+
 test("pricing uses integer minor units and rejects invalid quantities", () => {
   assert.equal(lineTotalMinor({ unitPriceMinor: 1299, quantity: 3 }), 3897);
   assert.equal(
@@ -41,6 +56,9 @@ test("pricing uses integer minor units and rejects invalid quantities", () => {
     3098,
   );
   assert.deepEqual(money(3098, "try"), { amountMinor: 3098, currency: "TRY" });
+  assert.equal(normalizeCurrency(" eur "), "EUR");
+  assert.throws(() => normalizeCurrency("ABC"), TypeError);
+  assert.throws(() => normalizeCurrency("ZZZ"), TypeError);
   assert.throws(() => lineTotalMinor({ unitPriceMinor: 100, quantity: 0 }));
 });
 
