@@ -11,7 +11,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Active PR:** #4
 - **Completion after this phase is verified and merged:** 41%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
-- **Latest CI state:** run #9 failed at the commerce test step because Node 22 strip-only TypeScript does not support parameter properties; commit `6b85f78` replaced that syntax with an explicit readonly field. A fresh CI run is required before the failing gate can be considered cleared.
+- **Latest verified CI evidence:** run #11 passed on commit `f70f098`; the branch has since added transactional cart/order persistence and concurrency-safe inventory reservation, so a fresh CI run on the new HEAD is required before merge.
 
 ## Roadmap and weights
 
@@ -71,32 +71,36 @@ Delivered backend foundation:
 
 ## Phase 4 — Product/cart/inventory/order commerce core
 
-Implemented so far on `commerce/core-services`:
+Implemented on `commerce/core-services`:
 
 - Inventory availability calculation.
 - Fail-closed inventory reservation and release rules.
 - Integer minor-unit pricing helpers to avoid floating-point money errors.
 - Cart line/subtotal calculation with safe-integer overflow protection.
 - ISO-4217 alpha-3 currency normalization.
-- Order idempotency key validation.
-- Deterministic order request fingerprint contract.
+- Order idempotency key validation and deterministic request fingerprint contract.
+- Database-backed cart item mutation inside a transaction with product, price and available-stock validation.
+- Transactional order creation from persisted cart state.
+- Deterministic order number derived from the validated idempotency key, making retries resolve to the same order.
+- Serializable order transaction boundary.
+- Concurrency-safe inventory reservation using one atomic conditional PostgreSQL UPDATE per variant; insufficient stock causes transaction rollback.
+- Cart clearing only after order creation succeeds inside the same transaction.
 - Automated tests covering stock, pricing and idempotency behavior.
 - Node 22 TypeScript stripping enabled for zero-dependency domain tests.
-- CI compatibility fix for unsupported TypeScript parameter-property syntax.
 
 ### Latest Phase 4 CI evidence
 
-CI run #9 reached the test gate with these results:
+CI run #11 on commit `f70f098` completed successfully:
 
 - Dependency installation: **PASS**
 - Prisma Client generation: **PASS**
 - Prisma schema validation: **PASS**
 - ESLint: **PASS**
 - TypeScript typecheck: **PASS**
-- Commerce tests: **FAIL** due to unsupported parameter-property syntax in Node 22 strip-only mode
-- Production build: **SKIPPED** because tests failed first
+- Commerce tests: **PASS**
+- Production build: **PASS**
 
-The syntax failure is fixed on the PR branch, but **the gate remains unverified until a new CI run passes**.
+The branch now contains additional transactional persistence code after that successful run. Therefore the final Phase 4 gates remain unverified until CI passes again on the current HEAD.
 
 ### Required Phase 4 gates
 
@@ -107,8 +111,8 @@ The syntax failure is fixed on the PR branch, but **the gate remains unverified 
 - [ ] ESLint passes with zero warnings on final Phase 4 HEAD
 - [ ] TypeScript typecheck passes on final Phase 4 HEAD
 - [ ] Production build passes on final Phase 4 HEAD
-- [ ] Database-backed cart/order transaction services complete
-- [ ] Concurrency-safe inventory transaction path complete
+- [x] Database-backed cart/order transaction services complete
+- [x] Concurrency-safe inventory transaction path complete
 - [ ] PR review/diff has no blocking defect
 - [ ] Phase 4 PR merged to `main`
 
