@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import "../globals.css";
+import "../storefront.css";
+import { CartDrawer } from "@/components/storefront/cart-ui";
+import { CartProvider } from "@/components/storefront/cart-provider";
+import { SiteFooter } from "@/components/storefront/site-footer";
+import { SiteHeader } from "@/components/storefront/site-header";
 import { isLocale, locales } from "@/i18n/config";
 
 const descriptions = {
@@ -45,10 +50,15 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body>
-        <a className="skip-link" href="#main-content">
-          {locale === "tr" ? "İçeriğe geç" : locale === "de" ? "Zum Inhalt" : "Skip to content"}
-        </a>
-        {children}
+        <CartProvider>
+          <a className="skip-link" href="#main-content">
+            {locale === "tr" ? "İçeriğe geç" : locale === "de" ? "Zum Inhalt" : "Skip to content"}
+          </a>
+          <SiteHeader locale={locale} />
+          {children}
+          <SiteFooter locale={locale} />
+          <CartDrawer locale={locale} />
+        </CartProvider>
       </body>
     </html>
   );
