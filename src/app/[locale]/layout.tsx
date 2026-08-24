@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import "../globals.css";
+import "../storefront.css";
 import { CartDrawer } from "@/components/storefront/cart-ui";
 import { CartProvider } from "@/components/storefront/cart-provider";
 import { SiteFooter } from "@/components/storefront/site-footer";
