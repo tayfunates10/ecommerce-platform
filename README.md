@@ -61,12 +61,23 @@ Implemented so far:
 - fail-closed payment gateway boundary with positive minor-unit amount validation;
 - supported checkout currencies restricted to TRY/EUR/USD;
 - payment idempotency/order identifier validation and deterministic request fingerprinting;
+- payment fingerprint now binds the validated return URL so changed retry destinations cannot reuse the original fingerprint;
+- provider status is fail-closed: only `authorized` and `requires_action` are accepted;
+- malformed or unsafe provider action URLs are normalized into controlled `INVALID_PROVIDER_RESPONSE` boundary failures;
 - HTTPS-only return/action URL validation and provider-response validation;
 - consent-aware first-party analytics event allowlist;
 - analytics payloads strip query strings and reject unsupported event names / unsafe property shapes;
 - hardened global response policy: HSTS, CSP, frame/object restrictions, MIME sniff protection, referrer, permissions and cross-origin policies;
 - finite checkout/payment/analytics rate-limit policy contracts with validated identity keys;
 - regression tests for payment boundary, analytics consent/privacy and security policy behavior.
+
+### CI / review evidence
+
+- CI #77 passed on the pre-review-fix Phase 8 HEAD.
+- Review then identified three payment-boundary blockers: unknown provider statuses, malformed provider redirect URL handling, and return-URL omission from idempotency fingerprinting.
+- All three blockers were fixed on the same PR branch and covered with regression tests.
+- All three review threads are resolved.
+- A fresh exact-head CI is required after these fixes before merge.
 
 ### Required Phase 8 gates
 
@@ -80,8 +91,8 @@ Implemented so far:
 - [ ] Production checkout orchestration endpoint/service
 - [ ] Persistent/distributed rate-limit enforcement path
 - [ ] Hardened server-side analytics event delivery
-- [ ] Final exact-head CI passes
-- [ ] Final PR diff/review has no unresolved blocker
+- [ ] Final exact-head CI passes after review fixes
+- [x] Current PR review blockers resolved
 - [ ] Phase 8 PR merged to `main`
 
 Phase 8 carries **10%**. It moves verified completion from **79% to 89% only after all required gates pass and PR #8 is merged**.
