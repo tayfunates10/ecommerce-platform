@@ -68,14 +68,13 @@ export default async function ProductPage({
   const copy = labels[locale];
   const productUrl = absoluteUrl(localizedPath(locale, `/products/${product.slug}`));
   const commonProductData = {
-    name: product.name,
-    description: product.description,
     brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
     image: product.image ? [product.image.url] : undefined,
   };
   const variantNodes = product.variants.map((item) => ({
     "@type": "Product",
     name: item.title ? `${product.name} - ${item.title}` : product.name,
+    description: product.description,
     sku: item.sku,
     ...commonProductData,
     offers: {
