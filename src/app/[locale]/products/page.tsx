@@ -66,7 +66,7 @@ export default async function ProductsPage({
   const products = await listStorefrontProducts(locale);
 
   return (
-    <main id="main-content">
+    <main id="main-content" tabIndex={-1}>
       <section className="page-hero" aria-labelledby="catalog-title">
         <div className="container page-hero__inner">
           <p className="eyebrow">{content.eyebrow}</p>
