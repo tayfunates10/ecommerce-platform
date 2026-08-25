@@ -74,13 +74,14 @@ Implemented:
 
 - CI #60 failed only at ESLint because the deferred-video fallback called `setState` synchronously inside an effect; this was fixed.
 - Three review blockers were addressed: dynamic storefront routes are included in the budget gate, backslash-based same-origin escape is rejected, and failed `sendBeacon` calls fall back to `fetch`.
-- CI #66 passed dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all 20 tests and the production build, then failed only at the performance-budget gate.
-- CI #68 again passed dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all 20 tests and production build, then failed only at the performance-budget gate.
-- CI #68 proves the corrected checker is now measuring real prerendered `<script src>` startup chunks: `_global-error` and `_not-found` are 181.9KB gzip, while TR/EN/DE home routes are 190.0KB gzip. The 150KB threshold is therefore genuinely exceeded.
+- CI #66 and CI #68 passed dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all 20 tests and production build, then failed only at the performance-budget gate.
+- CI #70 produced the requested exact chunk breakdown and again passed every gate except the unchanged 150KB initial-JS budget.
+- CI #70 measured `_global-error` and `_not-found` at **181.9KB gzip** and TR/EN/DE home routes at **190.0KB gzip**.
+- The dominant shared startup chunks are approximately **69.3KB + 39.5KB + 38.7KB gzip**, proving the majority of the overage is framework/runtime payload shared even by error pages rather than storefront-only code. Home adds about 8.1KB beyond that common baseline.
 - The **150KB initial-JS budget has not been relaxed** and PR #7 remains unmerged.
-- To identify the actual payload source before changing production code, the budget gate now emits an exact per-chunk gzip breakdown only when a route exceeds the threshold. This diagnostic does not alter acceptance criteria or pass/fail behavior.
-- The next exact-HEAD CI run must provide the chunk breakdown; only then will the largest responsible client payload be reduced at source.
-- Until the final exact-HEAD CI succeeds, the project remains **69% verified / 31% remaining**.
+- As the next production-side optimization, the branch now builds with `next build --webpack` instead of the default Turbopack production build. The intent is to test whether Webpack emits a materially smaller startup runtime while preserving the exact same acceptance threshold and application behavior.
+- The exact-HEAD CI following this build-mode change must pass dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all tests, production build and the unchanged performance-budget gate before Phase 7 can be completed.
+- Until that exact-HEAD CI succeeds, the project remains **69% verified / 31% remaining**.
 
 ### Required Phase 7 gates
 
