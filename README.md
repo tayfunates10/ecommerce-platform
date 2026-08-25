@@ -24,7 +24,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged |
 | 6. TR/EN/DE + technical SEO | 14% | ✅ Complete — PR #6 merged |
 | 7. Media + Core Web Vitals | 10% | ✅ Complete — PR #7 merged after CI #74 |
-| 8. Checkout + security + analytics | 10% | 🟡 Active — PR #8 |
+| 8. Checkout + security + analytics | 10% | 🟡 Active — PR #8, CI #85 passed |
 | 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
 | 10. Production certification + release | 4% | ⏳ Pending |
 | **Total** | **100%** | **79% verified on `main`** |
@@ -79,8 +79,11 @@ Implemented:
 
 - CI #77 passed before payment-boundary review fixes.
 - Three payment-boundary review blockers were fixed and all three threads resolved.
-- Exact-head CI #80 then passed on `618058239`.
-- The production orchestration, distributed persistence and analytics-delivery additions were added after CI #80, so **a new exact-head CI is mandatory before merge**.
+- Exact-head CI #80 passed on `618058239` after those fixes.
+- Production orchestration, distributed persistence and analytics-delivery additions were then added.
+- Exact-head **CI #85 passed successfully on `54d88a0544bf5bd137cfcc7fc64eddae17ee3031`** after those production-path additions.
+- All current PR #8 review threads are resolved.
+- This README evidence update creates a new HEAD; that final documentation-only HEAD must also pass CI before merge.
 
 ### Required Phase 8 gates
 
@@ -94,8 +97,9 @@ Implemented:
 - [x] Production checkout orchestration service
 - [x] Persistent/distributed rate-limit enforcement path
 - [x] Hardened server-side analytics event delivery
-- [ ] Final exact-head CI passes after production-path additions
+- [x] Production-path exact-head CI #85 passed
 - [x] Current PR review blockers resolved
+- [ ] Final README-evidence HEAD CI passes
 - [ ] Phase 8 PR merged to `main`
 
 Phase 8 carries **10%**. It moves verified completion from **79% to 89% only after all required gates pass and PR #8 is merged**.
