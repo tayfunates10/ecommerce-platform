@@ -19,8 +19,8 @@ export function WebVitalsReporter({ endpoint }: Props) {
     });
 
     if (typeof navigator.sendBeacon === "function") {
-      navigator.sendBeacon(endpoint, new Blob([payload], { type: "application/json" }));
-      return;
+      const queued = navigator.sendBeacon(endpoint, new Blob([payload], { type: "application/json" }));
+      if (queued) return;
     }
 
     void fetch(endpoint, {
