@@ -55,6 +55,30 @@ Production rules:
 9. Execute checkout, accessibility and performance smoke checks.
 10. Record deployment evidence and promote the release only if all checks pass.
 
+## Automated public production smoke evidence
+
+Once the exact candidate SHA is deployed to the real production hostname, run:
+
+```bash
+PRODUCTION_URL="https://shop.example.tld" \
+RELEASE_SHA="<40-character-candidate-sha>" \
+RELEASE_EVIDENCE_OUTPUT="production-public-smoke.json" \
+npm run release:verify:production
+```
+
+`PRODUCTION_URL` must be a real HTTPS origin. Localhost, `.invalid`, `example.com`, credentials, URL paths, query strings and fragments are rejected. `RELEASE_SHA` must be the exact 40-character Git SHA being certified.
+
+The verifier fails closed unless all of the following public checks pass:
+
+- TR/EN/DE storefronts return successful HTTPS responses;
+- localized canonical URLs point to the production origin;
+- every localized home page advertises TR/EN/DE plus `x-default` hreflang entries;
+- mandatory security headers are present and `X-Powered-By` is absent;
+- `robots.txt` advertises the production sitemap;
+- `sitemap.xml` is reachable and includes all three localized storefront roots.
+
+When `RELEASE_EVIDENCE_OUTPUT` is provided, the command writes SHA-bound JSON evidence with schema `ecommerce-production-public-smoke-v1`. A `PASS` from this command covers **only public HTTPS/SEO/security smoke checks**. It does not certify migrations, rollback/database compatibility, checkout/payment idempotency, accessibility or performance promotion gates; those remain independently mandatory.
+
 ## Rollback procedure
 
 1. Stop further promotion if a post-deploy gate fails.
