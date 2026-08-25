@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import "../globals.css";
 import "../storefront.css";
+import { WebVitalsReporter } from "@/components/performance/web-vitals-reporter";
 import { CartDrawer } from "@/components/storefront/cart-ui";
 import { CartProvider } from "@/components/storefront/cart-provider";
 import { SiteFooter } from "@/components/storefront/site-footer";
 import { SiteHeader } from "@/components/storefront/site-header";
 import { isLocale, locales } from "@/i18n/config";
+import { normalizeWebVitalsEndpoint } from "@/lib/performance";
 import { absoluteUrl, localeAlternates, localizedPath, siteName, siteUrl } from "@/lib/seo";
 
 const descriptions = {
@@ -15,6 +17,8 @@ const descriptions = {
   en: "A fast, secure, multilingual next-generation commerce experience.",
   de: "Ein schnelles, sicheres und mehrsprachiges E-Commerce-Erlebnis.",
 } as const;
+
+const webVitalsEndpoint = normalizeWebVitalsEndpoint(process.env.NEXT_PUBLIC_WEB_VITALS_ENDPOINT);
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -73,6 +77,7 @@ export default async function LocaleLayout({
           <SiteFooter locale={locale} />
           <CartDrawer locale={locale} />
         </CartProvider>
+        {webVitalsEndpoint ? <WebVitalsReporter endpoint={webVitalsEndpoint} /> : null}
       </body>
     </html>
   );
