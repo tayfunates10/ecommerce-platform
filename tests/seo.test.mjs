@@ -33,7 +33,7 @@ test("catalog and product routes expose localized canonical metadata", () => {
 test("product structured data supports ProductGroup and escaped JSON-LD", () => {
   assert.match(productSource, /ProductGroup/);
   assert.match(productSource, /hasVariant/);
-  assert.match(productSource, /replace\(\/<\/g/);
+  assert.ok(productSource.includes("replace(/</g"));
 });
 
 test("merchant contract carries required commerce fields", () => {
