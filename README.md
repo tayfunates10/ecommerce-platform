@@ -4,14 +4,14 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 
 ## Canonical project status
 
-- **Verified completion on `main`: 89%**
-- **Remaining on `main`: 11%**
-- **Current phase:** Phase 9 — E2E / accessibility / visual regression certification
-- **Current branch:** `qa/e2e-a11y-visual`
-- **Active PR:** PR #9 — browser certification
-- **Completion after Phase 9 is verified and merged:** 96%
+- **Verified completion on `main`: 96%**
+- **Remaining on `main`: 4%**
+- **Current phase:** Phase 10 — Production certification + release
+- **Current branch:** `release/production-certification`
+- **Active PR:** Phase 10 release certification PR
+- **Completion after Phase 10 is verified and merged:** 100%
 - **Merge rule:** no phase is counted as complete until required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
-- **Latest verified merge:** PR #8 merged to `main` as `778ba649` after final exact-head CI #86 passed and all review threads were resolved.
+- **Latest verified merge:** PR #9 merged to `main` as `61fe9ccf` after exact-head CI #97 passed and the final visual-regression review thread was resolved.
 
 ## Roadmap and weights
 
@@ -25,9 +25,9 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 6. TR/EN/DE + technical SEO | 14% | ✅ Complete — PR #6 merged |
 | 7. Media + Core Web Vitals | 10% | ✅ Complete — PR #7 merged after CI #74 |
 | 8. Checkout + security + analytics | 10% | ✅ Complete — PR #8 merged after CI #86 |
-| 9. E2E/a11y/visual regression certification | 7% | 🟡 Active |
-| 10. Production certification + release | 4% | ⏳ Pending |
-| **Total** | **100%** | **89% verified on `main`** |
+| 9. E2E/a11y/visual regression certification | 7% | ✅ Complete — PR #9 merged after CI #97 |
+| 10. Production certification + release | 4% | 🟡 Active |
+| **Total** | **100%** | **96% verified on `main`** |
 
 ## Completed phases
 
@@ -56,56 +56,40 @@ Merged in PR #8 as `778ba649` after production-path CI #85 and final README-evid
 
 Delivered: fail-closed payment boundary, validated payment fingerprints/callbacks, PostgreSQL-backed distributed rate limiting, consent-aware analytics persistence, hardened security headers/CSP, production checkout orchestration and regression coverage.
 
-## Phase 9 — E2E / accessibility / visual regression certification
+### Phase 9 — E2E / accessibility / visual regression certification
+Merged in PR #9 as `61fe9ccf` after exact-head CI #97 passed and the last review thread was resolved.
 
-Active branch: `qa/e2e-a11y-visual`.
+Delivered: Playwright browser certification, desktop Chromium + Pixel 7 mobile coverage, TR/EN/DE storefront E2E, WCAG 2/2.1 A/AA automated scans, keyboard focus/skip-link checks, locale navigation regression, horizontal-overflow/layout contracts, committed screenshot fingerprints and CI-retained browser evidence.
 
-Implemented in the active branch:
+## Phase 10 — Production certification + release
 
-- Playwright browser certification harness;
-- desktop Chromium and Pixel 7 mobile viewport projects;
-- TR/EN/DE localized home-route E2E coverage;
-- WCAG 2 A/AA + WCAG 2.1 A/AA automated axe scans;
-- keyboard skip-link/focus certification;
-- locale-navigation regression coverage;
-- horizontal-overflow and key-layout visual-contract checks;
-- full-page screenshot evidence attached per locale/viewport;
-- committed visual fingerprints sourced from successful CI evidence and enforced against fresh screenshots;
-- Playwright HTML report, traces/videos on failure and browser-certification artifacts retained by CI.
+Active branch: `release/production-certification`.
 
-### Latest CI / review evidence
+Implemented so far:
 
-- CI #88 passed dependency install, Prisma generate/validate, lint, typecheck, all **24/24 unit/domain tests**, production build and performance budgets.
-- Browser certification in CI #88 exposed six real keyboard skip-navigation failures because `#main-content` was not programmatically focusable.
-- Production accessibility fix added `tabIndex={-1}` to all storefront `main#main-content` targets without weakening the browser test.
-- Exact-head **CI #94 passed successfully on `2d59c347884041d9b8be4c862c38baf374c371ca`**, confirming the skip-navigation fix and all legacy/browser gates.
-- CI #94 browser-certification artifact `9567406632` (`sha256:3d7b0c074d198504d2ed1e7450a746ddc4af1e846a116122d0007eb2569dab62`) supplied the approved TR/EN/DE desktop/mobile screenshots.
-- Those six screenshots are now represented by committed SHA-256 visual fingerprints in `tests/e2e/visual-baselines.json`; fresh browser screenshots must match the approved pixels exactly while the PNG evidence is still attached to CI.
-- The outstanding visual-regression review blocker is addressed in code, but a fresh exact-head CI run is required before resolving the thread and merging.
+- canonical production environment contract;
+- release and migration checklist;
+- final security/performance/SEO/a11y/checkout gate checklist;
+- immutable SHA-based deployment sequence;
+- fail-closed deployment evidence requirements;
+- rollback procedure that does not blindly reverse database migrations;
+- canonical release evidence record in `docs/production-release.md`.
 
-### Required Phase 9 gates
+### Required Phase 10 gates
 
-- [x] Browser E2E harness added
-- [x] Desktop + mobile viewport coverage added
-- [x] TR/EN/DE storefront smoke coverage added
-- [x] Automated accessibility scans added
-- [x] Keyboard/focus checks added
-- [x] Visual layout contract + screenshot evidence added
-- [x] CI wired to install Chromium and enforce browser suite
-- [x] Accessibility fix verified by exact-head CI #94
-- [x] Approved visual fingerprints committed from CI #94 evidence
-- [ ] Fresh exact-head CI passes committed visual regression fingerprints + all legacy gates
+- [x] Production environment contract documented
+- [x] Migration/release checklist documented
+- [x] Final release gate checklist documented
+- [x] Deployment evidence schema documented
+- [x] Rollback procedure documented
+- [ ] Exact Phase 10 HEAD passes all mandatory CI/browser/performance gates
+- [ ] Production deployment/readiness evidence captured against the real target environment
+- [ ] Production SEO/security/a11y/performance/checkout smoke checks verified
 - [ ] Review blockers resolved
-- [ ] Phase 9 PR merged to `main`
+- [ ] Phase 10 PR merged to `main`
 
-Phase 9 carries **7%**. It moves verified completion from **89% to 96% only after all required gates pass and the Phase 9 PR is merged**.
+Phase 10 carries **4%**. It moves verified completion from **96% to 100% only after all mandatory production certification evidence exists, final CI/review gates pass and the Phase 10 PR is merged**.
 
 ## Progress reporting rule
 
 Every implementation phase updates this README with completed work, tests/CI results, PR/review/merge state, verified completion percentage, remaining percentage and the next planned phase.
-
-## Next phase after Phase 9
-
-**Phase 10 — Production certification + release (4%)**
-
-Planned scope: production environment contract, migration/release checklist, security/performance/SEO/a11y final gates, deployment/release evidence, rollback/readiness verification and final production certification.
