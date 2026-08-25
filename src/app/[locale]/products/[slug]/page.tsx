@@ -65,26 +65,46 @@ export default async function ProductPage({
   const variant = product.variant;
   const copy = labels[locale];
   const productUrl = absoluteUrl(localizedPath(locale, `/products/${product.slug}`));
-
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Product",
+  const commonProductData = {
     name: product.name,
     description: product.description,
-    sku: product.sku,
     brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
     image: product.image ? [product.image.url] : undefined,
-    offers: variant
-      ? {
-          "@type": "Offer",
-          url: productUrl,
-          priceCurrency: variant.currency,
-          price: variant.price.toFixed(2),
-          availability: variant.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-          sku: variant.sku,
-        }
-      : undefined,
   };
+  const variantNodes = product.variants.map((item) => ({
+    "@type": "Product",
+    name: item.title ? `${product.name} - ${item.title}` : product.name,
+    sku: item.sku,
+    ...commonProductData,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: item.currency,
+      price: item.price.toFixed(2),
+      availability: item.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      sku: item.sku,
+    },
+  }));
+
+  const structuredData = product.variants.length > 1
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ProductGroup",
+        name: product.name,
+        description: product.description,
+        productGroupID: product.sku,
+        ...commonProductData,
+        hasVariant: variantNodes,
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: product.name,
+        description: product.description,
+        sku: product.sku,
+        ...commonProductData,
+        offers: variantNodes[0]?.offers,
+      };
 
   return (
     <main id="main-content">
