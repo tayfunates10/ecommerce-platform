@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AddToCartButton } from "@/components/storefront/cart-ui";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getStorefrontProduct } from "@/lib/storefront-data";
+import { getProductTranslationLocales } from "@/lib/seo-product-data";
 import { absoluteUrl, localeAlternates, localizedPath, siteName } from "@/lib/seo";
 
 function formatMoney(amount: number, currency: string, locale: Locale) {
@@ -33,13 +34,14 @@ export async function generateMetadata({
   const pathname = `/products/${product.slug}`;
   const description = product.shortCopy ?? product.description;
   const image = product.image?.url;
+  const availableLocales = await getProductTranslationLocales(product.slug);
 
   return {
     title: product.name,
     description,
     alternates: {
       canonical: absoluteUrl(localizedPath(locale, pathname)),
-      languages: localeAlternates(pathname),
+      languages: localeAlternates(pathname, availableLocales),
     },
     openGraph: {
       type: "website",
