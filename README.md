@@ -76,7 +76,8 @@ Implemented so far:
 - rollback procedure requiring database compatibility with the rollback application SHA or a separately reviewed/tested remediation plan;
 - canonical release evidence record in `docs/production-release.md`;
 - fail-closed `npm run release:verify:production` public-production verifier requiring a real HTTPS hostname and exact 40-character release SHA;
-- SHA-bound JSON evidence generation for production HTTPS, localized canonical/hreflang, robots, sitemap and security-header smoke checks.
+- SHA-bound JSON evidence generation for production HTTPS, localized canonical/hreflang, robots, sitemap and security-header smoke checks;
+- fail-closed verifier regression coverage for missing target, non-HTTPS target, synthetic hostname and invalid release SHA.
 
 ### Required Phase 10 gates
 
@@ -91,7 +92,9 @@ Implemented so far:
 - [x] Migration/rollback compatibility review blocker fixed
 - [x] Review blockers resolved on the CI #101 HEAD
 - [x] Automated public production smoke verifier implemented
-- [ ] Exact latest Phase 10 HEAD after production-verifier changes passes all mandatory CI/browser/performance gates
+- [x] CI #106 root cause identified: release-verifier tests supplied the target as a CLI argument while an intentionally empty `PRODUCTION_URL` environment value took precedence
+- [x] CI #106 regression fixed without weakening production validation: verifier now treats an empty environment value as absent and correctly falls back to the CLI target
+- [ ] Exact latest Phase 10 HEAD after the CI #106 fix passes all mandatory CI/browser/performance gates
 - [ ] Production deployment/readiness evidence captured against the real target environment
 - [ ] Production migration and rollback-compatibility evidence captured
 - [ ] Production SEO/security/a11y/performance/checkout smoke checks verified
