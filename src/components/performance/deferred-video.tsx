@@ -31,15 +31,17 @@ export function DeferredVideo({
     const video = videoRef.current;
     if (!video) return;
 
+    const revealSources = () => setCanLoad(true);
+
     if (!("IntersectionObserver" in window)) {
-      setCanLoad(true);
+      queueMicrotask(revealSources);
       return;
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
-        setCanLoad(true);
+        revealSources();
         observer.disconnect();
       },
       { rootMargin: "300px 0px" },
