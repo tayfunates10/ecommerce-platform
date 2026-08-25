@@ -12,7 +12,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Completion after this phase is verified and merged:** 69%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
 - **Latest verified CI evidence:** Phase 5 final CI run #37 passed on commit `44ec27fc`.
-- **Latest Phase 6 CI evidence:** CI #39 passed dependency install, Prisma generate/validate, ESLint, typecheck and all tests, but production build failed because `/sitemap.xml` attempted a PostgreSQL query during prerender with no CI database service. The sitemap is now explicitly runtime-generated (`force-dynamic`); final HEAD requires a fresh fully green CI run.
+- **Latest Phase 6 evidence:** CI #39 exposed a build-time sitemap database dependency; this has been removed. Four SEO review blockers were also fixed: canonical origin now fails closed without `NEXT_PUBLIC_SITE_URL`, catalog pages own their canonical metadata, sitemap uses a dedicated uncapped translated-product query, and product hreflang only advertises existing translations. All four review threads are resolved. Final HEAD still requires a fresh fully green CI run.
 - **Latest verified merge:** PR #5 merged to `main` as commit `5946c36d`.
 
 ## Roadmap and weights
@@ -54,17 +54,19 @@ Active branch: `seo/i18n-foundation`.
 Implemented so far:
 
 - shared production site URL / absolute URL SEO helpers;
+- fail-closed canonical origin requiring an explicit HTTPS `NEXT_PUBLIC_SITE_URL`;
 - localized canonical URL construction;
 - reciprocal TR/EN/DE hreflang plus `x-default` helpers;
+- product hreflang restricted to translations that actually exist;
 - locale-layout metadata base, canonical, alternates and Open Graph metadata;
-- production `robots.ts` policy with sitemap declaration;
-- localized runtime sitemap for home, catalog and active product URLs without build-time database dependency;
 - localized catalog SEO metadata template;
+- production `robots.ts` policy with sitemap declaration;
+- localized runtime sitemap for home, catalog and every translated active product URL without the storefront 48-item cap or build-time database dependency;
 - localized product metadata generated from real product data;
 - Product JSON-LD with SKU, brand, image and Offer price/currency/availability;
 - ProductGroup/hasVariant JSON-LD for products with multiple sellable variants;
 - Merchant Center-compatible normalized product data contract;
-- crawl/indexation regression tests for hreflang, robots, sitemap, canonical metadata, structured data and merchant fields;
+- crawl/indexation regression tests for hreflang, robots, sitemap completeness, canonical metadata, structured data, fail-closed origin and merchant fields;
 - JSON-LD `<` escaping to avoid script-breakout injection.
 
 ### Required Phase 6 gates
@@ -77,13 +79,15 @@ Implemented so far:
 - [ ] Production build passes on final HEAD
 - [x] Localized canonical URL foundation
 - [x] Reciprocal TR/EN/DE hreflang + x-default foundation
+- [x] Product hreflang only targets available translations
 - [x] robots policy + runtime sitemap endpoint
+- [x] Complete translated-product sitemap query without 48-item storefront cap
 - [x] Product structured data foundation using real commerce data
 - [x] ProductGroup/variant structured data where multiple sellable variants exist
 - [x] Catalog/product SEO templates completed
 - [x] Merchant Center-compatible product data contract
 - [x] Crawl/indexation quality tests
-- [ ] PR review/diff has no unresolved blocking defect
+- [x] PR review/diff blockers identified so far are resolved
 - [ ] Phase 6 PR merged to `main`
 
 Only after every required Phase 6 gate is satisfied will this README report **69% verified / 31% remaining**.
