@@ -4,14 +4,14 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 
 ## Canonical project status
 
-- **Verified completion on `main`: 79%**
-- **Remaining on `main`: 21%**
-- **Current phase:** Phase 8 — Checkout + security + analytics
-- **Current branch:** `checkout/security-analytics`
-- **Active PR:** #8 — Checkout: security and analytics foundation
-- **Completion after Phase 8 is verified and merged:** 89%
+- **Verified completion on `main`: 89%**
+- **Remaining on `main`: 11%**
+- **Current phase:** Phase 9 — E2E / accessibility / visual regression certification
+- **Current branch:** `qa/e2e-a11y-visual`
+- **Active PR:** Phase 9 browser certification PR
+- **Completion after Phase 9 is verified and merged:** 96%
 - **Merge rule:** no phase is counted as complete until required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
-- **Latest verified merge:** PR #7 merged to `main` as `5f7bed01` after exact-head CI #74 succeeded and all review threads were resolved.
+- **Latest verified merge:** PR #8 merged to `main` as `778ba649` after final exact-head CI #86 passed and all review threads were resolved.
 
 ## Roadmap and weights
 
@@ -24,10 +24,10 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged |
 | 6. TR/EN/DE + technical SEO | 14% | ✅ Complete — PR #6 merged |
 | 7. Media + Core Web Vitals | 10% | ✅ Complete — PR #7 merged after CI #74 |
-| 8. Checkout + security + analytics | 10% | 🟡 Active — PR #8, CI #85 passed |
-| 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
+| 8. Checkout + security + analytics | 10% | ✅ Complete — PR #8 merged after CI #86 |
+| 9. E2E/a11y/visual regression certification | 7% | 🟡 Active |
 | 10. Production certification + release | 4% | ⏳ Pending |
-| **Total** | **100%** | **79% verified on `main`** |
+| **Total** | **100%** | **89% verified on `main`** |
 
 ## Completed phases
 
@@ -51,65 +51,48 @@ Merged in PR #7 as `5f7bed01` after exact-head CI #74 passed and all review thre
 
 Delivered: LCP/INP/CLS engineering budgets, AVIF/WebP media policy, responsive/lazy media, product-detail LCP priority, deferred video, privacy-minimal Web Vitals RUM, same-origin transport validation, Webpack production build, post-build DOM and modern-browser initial-JS enforcement, dynamic route coverage and unchanged **150KB gzip initial-JS** gate.
 
-## Phase 8 — Checkout + security + analytics
+### Phase 8 — Checkout + security + analytics
+Merged in PR #8 as `778ba649` after production-path CI #85 and final README-evidence CI #86 both passed and all review threads were resolved.
 
-Active branch: `checkout/security-analytics`.  
-Active PR: #8.
+Delivered: fail-closed payment boundary, validated payment fingerprints/callbacks, PostgreSQL-backed distributed rate limiting, consent-aware analytics persistence, hardened security headers/CSP, production checkout orchestration and regression coverage.
 
-Implemented:
+## Phase 9 — E2E / accessibility / visual regression certification
 
-- fail-closed payment gateway boundary with positive minor-unit amount validation;
-- supported checkout currencies restricted to TRY/EUR/USD;
-- payment idempotency/order identifier validation and deterministic request fingerprinting;
-- payment fingerprint binds the validated return URL;
-- provider status is fail-closed: only `authorized` and `requires_action` are accepted;
-- malformed/unsafe provider action URLs become controlled boundary failures;
-- HTTPS-only return/action URL validation;
-- consent-aware first-party analytics allowlist with query-string stripping;
-- hardened global security headers/CSP/HSTS policy;
-- finite checkout/payment/analytics rate-limit contracts;
-- PostgreSQL-backed atomic distributed rate-limit enforcement using conflict-safe bucket increments;
-- database migration for rate-limit buckets and analytics delivery storage;
-- hardened server-side analytics persistence after consent/privacy normalization;
-- production checkout orchestration connecting cart→transactional order→rate-limit→payment gateway→payment persistence;
-- duplicate payment persistence avoided by order/provider/provider-reference lookup;
-- regression tests for payment boundary, analytics consent/privacy and security policy behavior.
+Active branch: `qa/e2e-a11y-visual`.
 
-### CI / review evidence
+Implemented in the active branch:
 
-- CI #77 passed before payment-boundary review fixes.
-- Three payment-boundary review blockers were fixed and all three threads resolved.
-- Exact-head CI #80 passed on `618058239` after those fixes.
-- Production orchestration, distributed persistence and analytics-delivery additions were then added.
-- Exact-head **CI #85 passed successfully on `54d88a0544bf5bd137cfcc7fc64eddae17ee3031`** after those production-path additions.
-- All current PR #8 review threads are resolved.
-- This README evidence update creates a new HEAD; that final documentation-only HEAD must also pass CI before merge.
+- Playwright browser certification harness;
+- desktop Chromium and Pixel 7 mobile viewport projects;
+- TR/EN/DE localized home-route E2E coverage;
+- WCAG 2 A/AA + WCAG 2.1 A/AA automated axe scans;
+- keyboard skip-link/focus certification;
+- locale-navigation regression coverage;
+- horizontal-overflow and key-layout visual-contract checks;
+- full-page screenshot evidence attached per locale/viewport;
+- Playwright HTML report, traces/videos on failure and browser-certification artifacts retained by CI.
 
-### Required Phase 8 gates
+### Required Phase 9 gates
 
-- [x] Payment provider boundary contract
-- [x] Payment amount/currency/idempotency validation
-- [x] HTTPS callback/action validation
-- [x] Security headers + CSP policy
-- [x] WAF-facing finite rate-limit contracts
-- [x] Consent-aware first-party analytics payload contract
-- [x] Phase 8 regression tests added
-- [x] Production checkout orchestration service
-- [x] Persistent/distributed rate-limit enforcement path
-- [x] Hardened server-side analytics event delivery
-- [x] Production-path exact-head CI #85 passed
-- [x] Current PR review blockers resolved
-- [ ] Final README-evidence HEAD CI passes
-- [ ] Phase 8 PR merged to `main`
+- [x] Browser E2E harness added
+- [x] Desktop + mobile viewport coverage added
+- [x] TR/EN/DE storefront smoke coverage added
+- [x] Automated accessibility scans added
+- [x] Keyboard/focus checks added
+- [x] Visual layout contract + screenshot evidence added
+- [x] CI wired to install Chromium and enforce browser suite
+- [ ] Exact-head CI passes all legacy + browser certification gates
+- [ ] Review blockers resolved
+- [ ] Phase 9 PR merged to `main`
 
-Phase 8 carries **10%**. It moves verified completion from **79% to 89% only after all required gates pass and PR #8 is merged**.
+Phase 9 carries **7%**. It moves verified completion from **89% to 96% only after all required gates pass and the Phase 9 PR is merged**.
 
 ## Progress reporting rule
 
 Every implementation phase updates this README with completed work, tests/CI results, PR/review/merge state, verified completion percentage, remaining percentage and the next planned phase.
 
-## Next phase after Phase 8
+## Next phase after Phase 9
 
-**Phase 9 — E2E / accessibility / visual regression certification (7%)**
+**Phase 10 — Production certification + release (4%)**
 
-Planned scope: browser-level checkout/storefront flows, accessibility certification, keyboard/focus checks, screenshot/visual regression coverage and final cross-viewport regression gates.
+Planned scope: production environment contract, migration/release checklist, security/performance/SEO/a11y final gates, deployment/release evidence, rollback/readiness verification and final production certification.
