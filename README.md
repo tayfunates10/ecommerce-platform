@@ -12,7 +12,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Completion after this phase is verified and merged:** 69%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
 - **Latest verified CI evidence:** Phase 5 final CI run #37 passed on commit `44ec27fc`.
-- **Latest Phase 6 evidence:** CI #39 exposed a build-time sitemap database dependency; this has been removed. Four SEO review blockers were also fixed: canonical origin now fails closed without `NEXT_PUBLIC_SITE_URL`, catalog pages own their canonical metadata, sitemap uses a dedicated uncapped translated-product query, and product hreflang only advertises existing translations. All four review threads are resolved. Final HEAD still requires a fresh fully green CI run.
+- **Latest Phase 6 evidence:** CI #54 passed dependency install, Prisma generate/validate and ESLint, then failed TypeScript typecheck because Product/ProductGroup JSON-LD objects duplicated `name`/`description` through a shared spread. The shared structured-data fragment has been reduced to non-duplicated `brand`/`image` fields; final HEAD now requires a fresh full CI pass.
 - **Latest verified merge:** PR #5 merged to `main` as commit `5946c36d`.
 
 ## Roadmap and weights
@@ -67,7 +67,8 @@ Implemented so far:
 - ProductGroup/hasVariant JSON-LD for products with multiple sellable variants;
 - Merchant Center-compatible normalized product data contract;
 - crawl/indexation regression tests for hreflang, robots, sitemap completeness, canonical metadata, structured data, fail-closed origin and merchant fields;
-- JSON-LD `<` escaping to avoid script-breakout injection.
+- JSON-LD `<` escaping to avoid script-breakout injection;
+- duplicate JSON-LD field construction removed after CI #54 TypeScript validation caught spread overwrite risk.
 
 ### Required Phase 6 gates
 
