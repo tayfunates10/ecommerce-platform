@@ -20,6 +20,10 @@ test("payment boundary normalizes supported currency and fingerprints determinis
   };
   assert.equal(normalizePaymentIntent(input).currency, "TRY");
   assert.equal(paymentRequestFingerprint(input), paymentRequestFingerprint({ ...input }));
+  assert.notEqual(
+    paymentRequestFingerprint(input),
+    paymentRequestFingerprint({ ...input, returnUrl: "https://shop.example/checkout/complete" }),
+  );
   assert.throws(
     () => normalizePaymentIntent({ ...input, amountMinor: 0 }),
     (error) => error instanceof PaymentBoundaryError && error.code === "INVALID_REQUEST",
@@ -40,6 +44,30 @@ test("payment boundary rejects malformed provider responses", async () => {
   };
   await assert.rejects(
     () => createPaymentIntent({ createIntent: async () => ({ providerReference: "bad", status: "authorized" }) }, input),
+    (error) => error instanceof PaymentBoundaryError && error.code === "INVALID_PROVIDER_RESPONSE",
+  );
+  await assert.rejects(
+    () =>
+      createPaymentIntent(
+        {
+          createIntent: async () => ({ providerReference: "provider_12345678", status: "declined" }),
+        },
+        input,
+      ),
+    (error) => error instanceof PaymentBoundaryError && error.code === "INVALID_PROVIDER_RESPONSE",
+  );
+  await assert.rejects(
+    () =>
+      createPaymentIntent(
+        {
+          createIntent: async () => ({
+            providerReference: "provider_12345678",
+            status: "requires_action",
+            redirectUrl: "not a url",
+          }),
+        },
+        input,
+      ),
     (error) => error instanceof PaymentBoundaryError && error.code === "INVALID_PROVIDER_RESPONSE",
   );
 });
