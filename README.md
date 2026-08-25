@@ -8,7 +8,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Remaining on `main`: 31%**
 - **Current phase:** Phase 7 — Media + Core Web Vitals
 - **Current branch:** `perf/media-cwv`
-- **Active PR:** will be created for Phase 7 after the initial implementation commit set
+- **Active PR:** #7 — Performance: media and Core Web Vitals foundation
 - **Completion after Phase 7 is verified and merged:** 79%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
 - **Latest verified merge:** PR #6 merged to `main` as `a03817b5` after final CI #57 succeeded and all review threads were resolved.
@@ -23,7 +23,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 4. Product/cart/inventory/order commerce core | 16% | ✅ Complete — PR #4 merged |
 | 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged |
 | 6. TR/EN/DE + technical SEO | 14% | ✅ Complete — PR #6 merged after CI #57 |
-| 7. Media + Core Web Vitals | 10% | 🟡 Active — `perf/media-cwv` |
+| 7. Media + Core Web Vitals | 10% | 🟡 Active — PR #7 |
 | 8. Checkout + security + analytics | 10% | ⏳ Pending |
 | 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
 | 10. Production certification + release | 4% | ⏳ Pending |
@@ -50,19 +50,22 @@ Delivered: fail-closed canonical origin, localized canonical/hreflang metadata, 
 
 ## Phase 7 — Media + Core Web Vitals
 
-Active branch: `perf/media-cwv`.
+Active branch: `perf/media-cwv`.  
+Active PR: #7.
 
-Implemented so far:
+Implemented:
 
 - centralized engineering performance budget with targets of LCP <= 1.8s, INP <= 150ms and CLS <= 0.05;
-- explicit TTFB, initial JS and DOM-size engineering budgets;
-- Next Image AVIF/WebP output retained with a 75 quality allowlist;
+- explicit TTFB <= 500ms, initial client JS <= 150KB gzip and DOM <= 1500 node engineering budgets;
+- Next Image AVIF/WebP output with a 75 quality allowlist;
 - 30-day optimized-image cache TTL and responsive device/image size buckets;
 - catalog product images remain responsive, explicitly lazy-loaded and use the shared image quality budget;
 - product-detail hero image remains responsive and priority-loaded as the expected LCP media candidate;
+- reusable poster-first video primitive with `preload="none"`, `playsInline` and source injection only when the element approaches the viewport;
 - optional privacy-minimal Web Vitals reporter for LCP/INP/CLS only;
 - RUM transport is opt-in and restricted to a same-origin path; no endpoint means no reporter is rendered;
-- performance regression tests covering CWV budgets, image formats, product-detail LCP priority and same-origin RUM configuration;
+- post-build CI budget checker measures DOM nodes and gzip size of client scripts referenced by each prerendered HTML artifact;
+- performance/media regression tests cover CWV budgets, image formats, product-detail LCP priority, same-origin RUM configuration and deferred video behavior;
 - `.env.example` documents the required canonical site origin and optional Web Vitals endpoint.
 
 ### Required Phase 7 gates
@@ -76,13 +79,13 @@ Implemented so far:
 - [x] Privacy-minimal, opt-in RUM hook
 - [x] Same-origin RUM endpoint validation
 - [x] Performance regression tests added
-- [ ] Video lazy-load/poster strategy
-- [ ] Script/DOM budget enforcement beyond declared budget constants
+- [x] Video lazy-load/poster strategy
+- [x] Post-build script/DOM budget enforcement for prerendered pages
 - [ ] Final Phase 7 CI passes on exact HEAD
 - [ ] Final PR diff/review has no unresolved blocker
 - [ ] Phase 7 PR merged to `main`
 
-Phase 7 carries **10%**. It will move verified completion from **69% to 79% only after all required gates pass and its PR is merged**.
+Phase 7 carries **10%**. It will move verified completion from **69% to 79% only after all required gates pass and PR #7 is merged**.
 
 ## Progress reporting rule
 
