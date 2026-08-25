@@ -8,7 +8,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Remaining on `main`: 4%**
 - **Current phase:** Phase 10 — Production certification + release
 - **Current branch:** `release/production-certification`
-- **Active PR:** Phase 10 release certification PR
+- **Active PR:** Phase 10 release certification PR #10
 - **Completion after Phase 10 is verified and merged:** 100%
 - **Merge rule:** no phase is counted as complete until required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
 - **Latest verified merge:** PR #9 merged to `main` as `61fe9ccf` after exact-head CI #97 passed and the final visual-regression review thread was resolved.
@@ -74,7 +74,9 @@ Implemented so far:
 - fail-closed deployment evidence requirements;
 - build-time `NEXT_PUBLIC_*` environment ordering explicitly enforced before immutable artifact creation;
 - rollback procedure requiring database compatibility with the rollback application SHA or a separately reviewed/tested remediation plan;
-- canonical release evidence record in `docs/production-release.md`.
+- canonical release evidence record in `docs/production-release.md`;
+- fail-closed `npm run release:verify:production` public-production verifier requiring a real HTTPS hostname and exact 40-character release SHA;
+- SHA-bound JSON evidence generation for production HTTPS, localized canonical/hreflang, robots, sitemap and security-header smoke checks.
 
 ### Required Phase 10 gates
 
@@ -84,13 +86,22 @@ Implemented so far:
 - [x] Deployment evidence schema documented
 - [x] Rollback procedure documented
 - [x] Previous Phase 10 HEAD `6586f2fa` passed mandatory CI as run #99
+- [x] Phase 10 HEAD `1627f280` passed mandatory CI as run #101
 - [x] Build-time public environment ordering review blocker fixed
 - [x] Migration/rollback compatibility review blocker fixed
-- [ ] Exact latest Phase 10 HEAD passes all mandatory CI/browser/performance gates
+- [x] Review blockers resolved on the CI #101 HEAD
+- [x] Automated public production smoke verifier implemented
+- [ ] Exact latest Phase 10 HEAD after production-verifier changes passes all mandatory CI/browser/performance gates
 - [ ] Production deployment/readiness evidence captured against the real target environment
+- [ ] Production migration and rollback-compatibility evidence captured
 - [ ] Production SEO/security/a11y/performance/checkout smoke checks verified
-- [ ] Review blockers resolved
 - [ ] Phase 10 PR merged to `main`
+
+### Current release blocker
+
+No real production hostname/deployment target is committed or otherwise available in the repository. The project therefore remains fail-closed at **96% verified**: no example domain, localhost target, synthetic migration result or synthetic checkout result will be accepted as production evidence.
+
+Once the exact candidate SHA is deployed, run the public production verifier documented in `docs/production-release.md`; then capture the remaining migration, rollback-compatibility, checkout, accessibility and performance evidence against the same release SHA.
 
 Phase 10 carries **4%**. It moves verified completion from **96% to 100% only after all mandatory production certification evidence exists, final CI/review gates pass and the Phase 10 PR is merged**. CI success alone does not substitute for real production deployment evidence.
 
