@@ -20,8 +20,15 @@ export function isWithinCoreWebVitalBudget(name: CoreWebVitalName, value: number
 export function normalizeWebVitalsEndpoint(value: string | undefined) {
   const endpoint = value?.trim();
   if (!endpoint) return null;
-  if (!endpoint.startsWith("/") || endpoint.startsWith("//")) {
-    throw new Error("NEXT_PUBLIC_WEB_VITALS_ENDPOINT must be a same-origin absolute path beginning with '/'.");
+  if (endpoint.includes("\\") || !endpoint.startsWith("/") || endpoint.startsWith("//")) {
+    throw new Error("NEXT_PUBLIC_WEB_VITALS_ENDPOINT must be a same-origin absolute path beginning with '/' and must not contain backslashes.");
   }
-  return endpoint;
+
+  const base = new URL("https://same-origin.invalid");
+  const resolved = new URL(endpoint, base);
+  if (resolved.origin !== base.origin) {
+    throw new Error("NEXT_PUBLIC_WEB_VITALS_ENDPOINT must resolve to the same origin.");
+  }
+
+  return `${resolved.pathname}${resolved.search}`;
 }
