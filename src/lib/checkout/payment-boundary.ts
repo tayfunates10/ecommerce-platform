@@ -64,7 +64,9 @@ export function normalizePaymentIntent(input: PaymentIntentInput): PaymentIntent
 export function paymentRequestFingerprint(input: PaymentIntentInput): string {
   const normalized = normalizePaymentIntent(input);
   return createHash("sha256")
-    .update(`${normalized.orderId}:${normalized.amountMinor}:${normalized.currency}:${normalized.idempotencyKey}`)
+    .update(
+      `${normalized.orderId}:${normalized.amountMinor}:${normalized.currency}:${normalized.idempotencyKey}:${normalized.returnUrl}`,
+    )
     .digest("hex");
 }
 
@@ -78,11 +80,19 @@ export async function createPaymentIntent(
   if (!PROVIDER_REFERENCE.test(result.providerReference)) {
     throw new PaymentBoundaryError("INVALID_PROVIDER_RESPONSE", "Payment provider reference is invalid.");
   }
+  if (result.status !== "authorized" && result.status !== "requires_action") {
+    throw new PaymentBoundaryError("INVALID_PROVIDER_RESPONSE", "Payment provider status is invalid.");
+  }
   if (result.status === "requires_action") {
     if (!result.redirectUrl) {
       throw new PaymentBoundaryError("INVALID_PROVIDER_RESPONSE", "Payment action URL is required.");
     }
-    const redirect = new URL(result.redirectUrl);
+    let redirect: URL;
+    try {
+      redirect = new URL(result.redirectUrl);
+    } catch {
+      throw new PaymentBoundaryError("INVALID_PROVIDER_RESPONSE", "Payment action URL is invalid.");
+    }
     if (redirect.protocol !== "https:" || redirect.username || redirect.password) {
       throw new PaymentBoundaryError("INVALID_PROVIDER_RESPONSE", "Payment action URL must be HTTPS.");
     }
