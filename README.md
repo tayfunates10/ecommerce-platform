@@ -70,14 +70,18 @@ Implemented in the active branch:
 - locale-navigation regression coverage;
 - horizontal-overflow and key-layout visual-contract checks;
 - full-page screenshot evidence attached per locale/viewport;
+- committed visual fingerprints sourced from successful CI evidence and enforced against fresh screenshots;
 - Playwright HTML report, traces/videos on failure and browser-certification artifacts retained by CI.
 
-### Latest CI evidence
+### Latest CI / review evidence
 
 - CI #88 passed dependency install, Prisma generate/validate, lint, typecheck, all **24/24 unit/domain tests**, production build and performance budgets.
-- Browser certification then ran **20 tests**; 14 passed and the six TR/EN/DE desktop/mobile keyboard skip-navigation cases failed because `#main-content` was not programmatically focusable after activating the skip link.
-- Production accessibility fix applied on all storefront `main#main-content` targets using `tabIndex={-1}`. The browser test itself was not weakened.
-- A fresh exact-head CI run is required before merge.
+- Browser certification in CI #88 exposed six real keyboard skip-navigation failures because `#main-content` was not programmatically focusable.
+- Production accessibility fix added `tabIndex={-1}` to all storefront `main#main-content` targets without weakening the browser test.
+- Exact-head **CI #94 passed successfully on `2d59c347884041d9b8be4c862c38baf374c371ca`**, confirming the skip-navigation fix and all legacy/browser gates.
+- CI #94 browser-certification artifact `9567406632` (`sha256:3d7b0c074d198504d2ed1e7450a746ddc4af1e846a116122d0007eb2569dab62`) supplied the approved TR/EN/DE desktop/mobile screenshots.
+- Those six screenshots are now represented by committed SHA-256 visual fingerprints in `tests/e2e/visual-baselines.json`; fresh browser screenshots must match the approved pixels exactly while the PNG evidence is still attached to CI.
+- The outstanding visual-regression review blocker is addressed in code, but a fresh exact-head CI run is required before resolving the thread and merging.
 
 ### Required Phase 9 gates
 
@@ -88,7 +92,9 @@ Implemented in the active branch:
 - [x] Keyboard/focus checks added
 - [x] Visual layout contract + screenshot evidence added
 - [x] CI wired to install Chromium and enforce browser suite
-- [ ] Exact-head CI passes all legacy + browser certification gates
+- [x] Accessibility fix verified by exact-head CI #94
+- [x] Approved visual fingerprints committed from CI #94 evidence
+- [ ] Fresh exact-head CI passes committed visual regression fingerprints + all legacy gates
 - [ ] Review blockers resolved
 - [ ] Phase 9 PR merged to `main`
 
