@@ -72,7 +72,8 @@ Implemented so far:
 - final security/performance/SEO/a11y/checkout gate checklist;
 - immutable SHA-based deployment sequence;
 - fail-closed deployment evidence requirements;
-- rollback procedure that does not blindly reverse database migrations;
+- build-time `NEXT_PUBLIC_*` environment ordering explicitly enforced before immutable artifact creation;
+- rollback procedure requiring database compatibility with the rollback application SHA or a separately reviewed/tested remediation plan;
 - canonical release evidence record in `docs/production-release.md`.
 
 ### Required Phase 10 gates
@@ -82,13 +83,16 @@ Implemented so far:
 - [x] Final release gate checklist documented
 - [x] Deployment evidence schema documented
 - [x] Rollback procedure documented
-- [ ] Exact Phase 10 HEAD passes all mandatory CI/browser/performance gates
+- [x] Previous Phase 10 HEAD `6586f2fa` passed mandatory CI as run #99
+- [x] Build-time public environment ordering review blocker fixed
+- [x] Migration/rollback compatibility review blocker fixed
+- [ ] Exact latest Phase 10 HEAD passes all mandatory CI/browser/performance gates
 - [ ] Production deployment/readiness evidence captured against the real target environment
 - [ ] Production SEO/security/a11y/performance/checkout smoke checks verified
 - [ ] Review blockers resolved
 - [ ] Phase 10 PR merged to `main`
 
-Phase 10 carries **4%**. It moves verified completion from **96% to 100% only after all mandatory production certification evidence exists, final CI/review gates pass and the Phase 10 PR is merged**.
+Phase 10 carries **4%**. It moves verified completion from **96% to 100% only after all mandatory production certification evidence exists, final CI/review gates pass and the Phase 10 PR is merged**. CI success alone does not substitute for real production deployment evidence.
 
 ## Progress reporting rule
 
