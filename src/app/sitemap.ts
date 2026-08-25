@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { locales } from "@/i18n/config";
-import { listStorefrontProducts } from "@/lib/storefront-data";
+import { listSitemapProductSlugs } from "@/lib/seo-product-data";
 import { absoluteUrl, localizedPath } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -15,10 +15,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: absoluteUrl(localizedPath(locale, "/products")), lastModified: now, changeFrequency: "daily", priority: 0.9 },
     );
 
-    const products = await listStorefrontProducts(locale);
-    for (const product of products) {
+    const slugs = await listSitemapProductSlugs(locale);
+    for (const slug of slugs) {
       entries.push({
-        url: absoluteUrl(localizedPath(locale, `/products/${product.slug}`)),
+        url: absoluteUrl(localizedPath(locale, `/products/${slug}`)),
         lastModified: now,
         changeFrequency: "daily",
         priority: 0.8,
