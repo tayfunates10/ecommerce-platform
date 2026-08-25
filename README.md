@@ -56,28 +56,31 @@ Delivered: LCP/INP/CLS engineering budgets, AVIF/WebP media policy, responsive/l
 Active branch: `checkout/security-analytics`.  
 Active PR: #8.
 
-Implemented so far:
+Implemented:
 
 - fail-closed payment gateway boundary with positive minor-unit amount validation;
 - supported checkout currencies restricted to TRY/EUR/USD;
 - payment idempotency/order identifier validation and deterministic request fingerprinting;
-- payment fingerprint now binds the validated return URL so changed retry destinations cannot reuse the original fingerprint;
+- payment fingerprint binds the validated return URL;
 - provider status is fail-closed: only `authorized` and `requires_action` are accepted;
-- malformed or unsafe provider action URLs are normalized into controlled `INVALID_PROVIDER_RESPONSE` boundary failures;
-- HTTPS-only return/action URL validation and provider-response validation;
-- consent-aware first-party analytics event allowlist;
-- analytics payloads strip query strings and reject unsupported event names / unsafe property shapes;
-- hardened global response policy: HSTS, CSP, frame/object restrictions, MIME sniff protection, referrer, permissions and cross-origin policies;
-- finite checkout/payment/analytics rate-limit policy contracts with validated identity keys;
+- malformed/unsafe provider action URLs become controlled boundary failures;
+- HTTPS-only return/action URL validation;
+- consent-aware first-party analytics allowlist with query-string stripping;
+- hardened global security headers/CSP/HSTS policy;
+- finite checkout/payment/analytics rate-limit contracts;
+- PostgreSQL-backed atomic distributed rate-limit enforcement using conflict-safe bucket increments;
+- database migration for rate-limit buckets and analytics delivery storage;
+- hardened server-side analytics persistence after consent/privacy normalization;
+- production checkout orchestration connecting cart→transactional order→rate-limit→payment gateway→payment persistence;
+- duplicate payment persistence avoided by order/provider/provider-reference lookup;
 - regression tests for payment boundary, analytics consent/privacy and security policy behavior.
 
 ### CI / review evidence
 
-- CI #77 passed on the pre-review-fix Phase 8 HEAD.
-- Review then identified three payment-boundary blockers: unknown provider statuses, malformed provider redirect URL handling, and return-URL omission from idempotency fingerprinting.
-- All three blockers were fixed on the same PR branch and covered with regression tests.
-- All three review threads are resolved.
-- A fresh exact-head CI is required after these fixes before merge.
+- CI #77 passed before payment-boundary review fixes.
+- Three payment-boundary review blockers were fixed and all three threads resolved.
+- Exact-head CI #80 then passed on `618058239`.
+- The production orchestration, distributed persistence and analytics-delivery additions were added after CI #80, so **a new exact-head CI is mandatory before merge**.
 
 ### Required Phase 8 gates
 
@@ -88,10 +91,10 @@ Implemented so far:
 - [x] WAF-facing finite rate-limit contracts
 - [x] Consent-aware first-party analytics payload contract
 - [x] Phase 8 regression tests added
-- [ ] Production checkout orchestration endpoint/service
-- [ ] Persistent/distributed rate-limit enforcement path
-- [ ] Hardened server-side analytics event delivery
-- [ ] Final exact-head CI passes after review fixes
+- [x] Production checkout orchestration service
+- [x] Persistent/distributed rate-limit enforcement path
+- [x] Hardened server-side analytics event delivery
+- [ ] Final exact-head CI passes after production-path additions
 - [x] Current PR review blockers resolved
 - [ ] Phase 8 PR merged to `main`
 
