@@ -1,0 +1,17 @@
+{
+  "schema": "ecommerce-visual-baselines-v1",
+  "source": {
+    "ci_run": 94,
+    "head_sha": "2d59c347884041d9b8be4c862c38baf374c371ca",
+    "artifact_id": 9567406632,
+    "artifact_digest": "sha256:3d7b0c074d198504d2ed1e7450a746ddc4af1e846a116122d0007eb2569dab62"
+  },
+  "screenshots": {
+    "tr-desktop-chromium": "678946e24f716afb177b6ada7782ac25062b064fa94db86b4febf79769b54a05",
+    "en-desktop-chromium": "77692e1eef6c30d8faea2bd45396287a7ed94529212fd502f5b2fa42a8f86845",
+    "de-desktop-chromium": "4494017a2819d9920fb5c837d15de486d02e37473c2fa206352dc78f6c4baf17",
+    "tr-mobile-chromium": "1528a9249a03790e3d5ed6c086bbb760b67584b6f7eab74779785ab371270d54",
+    "en-mobile-chromium": "cdb056e2c92d823d2845048832187be1fe2b662823d93814c0dae78c338acbf8",
+    "de-mobile-chromium": "d43bc02f1cfd54ab8b911f4e76b06ac57e704086bf47c5c7bc7cf4d4bb6ebb94"
+  }
+}

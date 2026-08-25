@@ -1,6 +1,6 @@
 {
   "name": "ecommerce-platform",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -13,6 +13,8 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:report": "playwright show-report",
     "perf:budget": "node --experimental-strip-types scripts/check-performance-budget.mjs",
     "check": "npm run db:generate && npm run db:validate && npm run lint && npm run typecheck && npm run test && npm run build && npm run perf:budget",
     "db:generate": "prisma generate",
@@ -31,6 +33,8 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
