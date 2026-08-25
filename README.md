@@ -63,10 +63,19 @@ Implemented:
 - product-detail hero image remains responsive and priority-loaded as the expected LCP media candidate;
 - reusable poster-first video primitive with `preload="none"`, `playsInline` and source injection only when the element approaches the viewport;
 - optional privacy-minimal Web Vitals reporter for LCP/INP/CLS only;
-- RUM transport is opt-in and restricted to a same-origin path; no endpoint means no reporter is rendered;
-- post-build CI budget checker measures DOM nodes and gzip size of client scripts referenced by each prerendered HTML artifact;
+- RUM transport is opt-in and restricted to a same-origin path; endpoint validation rejects backslashes and verifies resolved origin;
+- `sendBeacon()` now falls back to keepalive `fetch` when the browser refuses to queue the beacon;
+- post-build CI budget checker measures DOM nodes and gzip size of client scripts referenced by prerendered HTML artifacts;
+- dynamic catalog/product storefront routes are explicitly included through their client-reference manifests, and the catalog DOM envelope is coupled to the exported 48-product storefront limit;
 - performance/media regression tests cover CWV budgets, image formats, product-detail LCP priority, same-origin RUM configuration and deferred video behavior;
 - `.env.example` documents the required canonical site origin and optional Web Vitals endpoint.
+
+### Latest Phase 7 CI/review status
+
+- CI #60 failed only at ESLint because the deferred-video fallback called `setState` synchronously inside an effect.
+- The fallback now schedules source reveal through a microtask, preserving the no-IntersectionObserver fallback without violating the React hook lint rule.
+- Three review blockers were addressed: dynamic storefront routes are no longer omitted from the budget gate, backslash-based same-origin escape is rejected, and failed `sendBeacon` calls fall back to `fetch`.
+- A fresh exact-HEAD CI run is required before merge; until that succeeds the project remains **69% verified / 31% remaining**.
 
 ### Required Phase 7 gates
 
@@ -81,6 +90,7 @@ Implemented:
 - [x] Performance regression tests added
 - [x] Video lazy-load/poster strategy
 - [x] Post-build script/DOM budget enforcement for prerendered pages
+- [x] Dynamic catalog/product routes included in performance budget enforcement
 - [ ] Final Phase 7 CI passes on exact HEAD
 - [ ] Final PR diff/review has no unresolved blocker
 - [ ] Phase 7 PR merged to `main`
