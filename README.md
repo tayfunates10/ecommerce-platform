@@ -11,8 +11,8 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Active PR:** #6 — SEO: multilingual technical foundation
 - **Completion after this phase is verified and merged:** 69%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
-- **Latest verified CI evidence:** Phase 5 final CI run #37 passed on commit `44ec27fc`.
-- **Latest Phase 6 evidence:** CI #54 passed dependency install, Prisma generate/validate and ESLint, then failed TypeScript typecheck because Product/ProductGroup JSON-LD objects duplicated `name`/`description` through a shared spread. The shared structured-data fragment has been reduced to non-duplicated `brand`/`image` fields; final HEAD now requires a fresh full CI pass.
+- **Latest verified CI evidence:** Phase 6 final implementation HEAD `dc72a048` passed CI run #56: dependency installation, Prisma Client generation/schema validation, ESLint, TypeScript typecheck, tests and production build all succeeded.
+- **Review status:** all four Phase 6 review threads are resolved; no unresolved blocking review thread remains.
 - **Latest verified merge:** PR #5 merged to `main` as commit `5946c36d`.
 
 ## Roadmap and weights
@@ -24,12 +24,12 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 3. PostgreSQL + data model + backend | 13% | ✅ Complete — PR #3 merged |
 | 4. Product/cart/inventory/order commerce core | 16% | ✅ Complete — PR #4 merged |
 | 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged after CI #37 |
-| 6. TR/EN/DE + technical SEO | 14% | 🟡 In progress — PR #6 |
+| 6. TR/EN/DE + technical SEO | 14% | 🟢 Merge candidate — implementation HEAD passed CI #56, review blockers resolved |
 | 7. Media + Core Web Vitals | 10% | ⏳ Pending |
 | 8. Checkout + security + analytics | 10% | ⏳ Pending |
 | 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
 | 10. Production certification + release | 4% | ⏳ Pending |
-| **Total** | **100%** | **55% verified** |
+| **Total** | **100%** | **55% verified on `main`** |
 
 ## Completed phases
 
@@ -51,7 +51,7 @@ Delivered: accessible responsive storefront shell, real database-backed product 
 
 Active branch: `seo/i18n-foundation`.
 
-Implemented so far:
+Implemented:
 
 - shared production site URL / absolute URL SEO helpers;
 - fail-closed canonical origin requiring an explicit HTTPS `NEXT_PUBLIC_SITE_URL`;
@@ -72,12 +72,12 @@ Implemented so far:
 
 ### Required Phase 6 gates
 
-- [ ] Dependency installation passes on final Phase 6 HEAD
-- [ ] Prisma Client generation/validation passes on final HEAD
-- [ ] ESLint passes with zero warnings on final HEAD
-- [ ] TypeScript typecheck passes on final HEAD
-- [ ] Tests pass on final HEAD
-- [ ] Production build passes on final HEAD
+- [x] Dependency installation passes on final implementation HEAD — CI #56
+- [x] Prisma Client generation/validation passes — CI #56
+- [x] ESLint passes with zero warnings — CI #56
+- [x] TypeScript typecheck passes — CI #56
+- [x] Tests pass — CI #56
+- [x] Production build passes — CI #56
 - [x] Localized canonical URL foundation
 - [x] Reciprocal TR/EN/DE hreflang + x-default foundation
 - [x] Product hreflang only targets available translations
@@ -91,7 +91,7 @@ Implemented so far:
 - [x] PR review/diff blockers identified so far are resolved
 - [ ] Phase 6 PR merged to `main`
 
-Only after every required Phase 6 gate is satisfied will this README report **69% verified / 31% remaining**.
+The implementation HEAD passed all required quality gates. This documentation-only progress commit must also pass repository CI before PR #6 is merged. Only after merge will this README report **69% verified / 31% remaining**.
 
 ## Progress reporting rule
 
