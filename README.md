@@ -65,17 +65,19 @@ Implemented:
 - optional privacy-minimal Web Vitals reporter for LCP/INP/CLS only;
 - RUM transport is opt-in and restricted to a same-origin path; endpoint validation rejects backslashes and verifies resolved origin;
 - `sendBeacon()` now falls back to keepalive `fetch` when the browser refuses to queue the beacon;
-- post-build CI budget checker measures DOM nodes and gzip size of client scripts referenced by prerendered HTML artifacts;
+- post-build CI budget checker measures DOM nodes and gzip size of client scripts actually referenced by prerendered HTML `<script src>` tags;
 - dynamic catalog/product storefront routes are explicitly included through their client-reference manifests, and the catalog DOM envelope is coupled to the exported 48-product storefront limit;
 - performance/media regression tests cover CWV budgets, image formats, product-detail LCP priority, same-origin RUM configuration and deferred video behavior;
 - `.env.example` documents the required canonical site origin and optional Web Vitals endpoint.
 
 ### Latest Phase 7 CI/review status
 
-- CI #60 failed only at ESLint because the deferred-video fallback called `setState` synchronously inside an effect.
-- The fallback now schedules source reveal through a microtask, preserving the no-IntersectionObserver fallback without violating the React hook lint rule.
-- Three review blockers were addressed: dynamic storefront routes are no longer omitted from the budget gate, backslash-based same-origin escape is rejected, and failed `sendBeacon` calls fall back to `fetch`.
-- A fresh exact-HEAD CI run is required before merge; until that succeeds the project remains **69% verified / 31% remaining**.
+- CI #60 failed only at ESLint because the deferred-video fallback called `setState` synchronously inside an effect; this was fixed by scheduling source reveal through a microtask.
+- Three review blockers were addressed: dynamic storefront routes are included in the budget gate, backslash-based same-origin escape is rejected, and failed `sendBeacon` calls fall back to `fetch`.
+- CI #66 passed dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all 20 tests and the production build, then failed only at the performance-budget gate.
+- CI #66 reported 181.9–190.0KB of “initial JS” for prerendered routes because the budget script’s broad `static/*.js` scan also counted chunk references embedded in React/Next payload data, not only scripts initially requested by the browser.
+- The **150KB initial-JS budget was not relaxed**. The checker was corrected to count only actual prerendered `<script src="/_next/static/...">` chunks for initial-load measurement, while retaining the broader client-reference manifest scan for dynamic route envelopes.
+- A fresh exact-HEAD CI run is required after this measurement fix; until it succeeds the project remains **69% verified / 31% remaining**.
 
 ### Required Phase 7 gates
 
