@@ -16,6 +16,15 @@ type ProductReadRecord = {
   }>;
 };
 
+export type StorefrontVariant = {
+  id: string;
+  sku: string;
+  title: string | null;
+  price: number;
+  currency: string;
+  available: number;
+};
+
 export type StorefrontProduct = {
   id: string;
   slug: string;
@@ -25,14 +34,8 @@ export type StorefrontProduct = {
   description: string;
   shortCopy: string | null;
   image: { url: string; alt: string | null; width: number | null; height: number | null } | null;
-  variant: {
-    id: string;
-    sku: string;
-    title: string | null;
-    price: number;
-    currency: string;
-    available: number;
-  } | null;
+  variant: StorefrontVariant | null;
+  variants: StorefrontVariant[];
 };
 
 const dbLocale: Record<Locale, "TR" | "EN" | "DE"> = { tr: "TR", en: "EN", de: "DE" };
@@ -41,10 +44,20 @@ const preferredCurrency: Record<Locale, "TRY" | "USD" | "EUR"> = { tr: "TRY", en
 function serializeProduct(product: ProductReadRecord): StorefrontProduct | null {
   const translation = product.translations[0];
   if (!translation) return null;
-  const variant = product.variants[0];
-  const price = variant?.prices[0];
-  const inventory = variant?.inventory;
   const media = product.media[0];
+  const variants = product.variants.flatMap((variant) => {
+    const price = variant.prices[0];
+    if (!price) return [];
+    const inventory = variant.inventory;
+    return [{
+      id: variant.id,
+      sku: variant.sku,
+      title: variant.title,
+      price: Number(price.amount.toString()),
+      currency: price.currency,
+      available: inventory ? Math.max(0, inventory.quantity - inventory.reserved) : 0,
+    } satisfies StorefrontVariant];
+  });
 
   return {
     id: product.id,
@@ -55,14 +68,8 @@ function serializeProduct(product: ProductReadRecord): StorefrontProduct | null 
     description: translation.description,
     shortCopy: translation.shortCopy,
     image: media ? { url: media.url, alt: media.alt, width: media.width, height: media.height } : null,
-    variant: variant && price ? {
-      id: variant.id,
-      sku: variant.sku,
-      title: variant.title,
-      price: Number(price.amount.toString()),
-      currency: price.currency,
-      available: inventory ? Math.max(0, inventory.quantity - inventory.reserved) : 0,
-    } : null,
+    variant: variants[0] ?? null,
+    variants,
   };
 }
 
@@ -91,7 +98,7 @@ export async function getStorefrontProduct(locale: Locale, slug: string): Promis
     include: {
       translations: { where: { locale: dbLocale[locale] }, take: 1 },
       media: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }], take: 1 },
-      variants: { where: { active: true }, orderBy: { createdAt: "asc" }, take: 1, include: {
+      variants: { where: { active: true }, orderBy: { createdAt: "asc" }, include: {
         inventory: true,
         prices: { where: { currency: preferredCurrency[locale] }, orderBy: { validFrom: "desc" }, take: 1 },
       } },

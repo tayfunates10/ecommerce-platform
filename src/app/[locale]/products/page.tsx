@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/storefront/product-card";
 import { isLocale, type Locale } from "@/i18n/config";
+import { absoluteUrl, localeAlternates, localizedPath, siteName } from "@/lib/seo";
 import { listStorefrontProducts } from "@/lib/storefront-data";
 
 const copy: Record<Locale, { eyebrow: string; title: string; body: string; emptyTitle: string; emptyBody: string }> = {
@@ -28,6 +30,30 @@ const copy: Record<Locale, { eyebrow: string; title: string; body: string; empty
 };
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  const content = copy[locale];
+  const pathname = "/products";
+  const url = absoluteUrl(localizedPath(locale, pathname));
+
+  return {
+    title: `${content.title} | ${siteName}`,
+    description: content.body,
+    alternates: {
+      canonical: url,
+      languages: localeAlternates(pathname),
+    },
+    openGraph: {
+      type: "website",
+      siteName,
+      title: content.title,
+      description: content.body,
+      url,
+    },
+  };
+}
 
 export default async function ProductsPage({
   params,

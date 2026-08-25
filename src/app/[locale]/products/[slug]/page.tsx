@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCartButton } from "@/components/storefront/cart-ui";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getStorefrontProduct } from "@/lib/storefront-data";
+import { getProductTranslationLocales } from "@/lib/seo-product-data";
+import { absoluteUrl, localeAlternates, localizedPath, siteName } from "@/lib/seo";
 
 function formatMoney(amount: number, currency: string, locale: Locale) {
   const localeTag = locale === "tr" ? "tr-TR" : locale === "de" ? "de-DE" : "en-US";
@@ -18,6 +21,39 @@ const labels = {
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  if (!isLocale(locale)) return {};
+  const product = await getStorefrontProduct(locale, slug);
+  if (!product) return { robots: { index: false, follow: false } };
+
+  const pathname = `/products/${product.slug}`;
+  const description = product.shortCopy ?? product.description;
+  const image = product.image?.url;
+  const availableLocales = await getProductTranslationLocales(product.slug);
+
+  return {
+    title: product.name,
+    description,
+    alternates: {
+      canonical: absoluteUrl(localizedPath(locale, pathname)),
+      languages: localeAlternates(pathname, availableLocales),
+    },
+    openGraph: {
+      type: "website",
+      siteName,
+      title: product.name,
+      description,
+      url: absoluteUrl(localizedPath(locale, pathname)),
+      images: image ? [{ url: image, alt: product.image?.alt ?? product.name }] : undefined,
+    },
+  };
+}
+
 export default async function ProductPage({
   params,
 }: {
@@ -30,9 +66,53 @@ export default async function ProductPage({
   if (!product) notFound();
   const variant = product.variant;
   const copy = labels[locale];
+  const productUrl = absoluteUrl(localizedPath(locale, `/products/${product.slug}`));
+  const commonProductData = {
+    brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
+    image: product.image ? [product.image.url] : undefined,
+  };
+  const variantNodes = product.variants.map((item) => ({
+    "@type": "Product",
+    name: item.title ? `${product.name} - ${item.title}` : product.name,
+    description: product.description,
+    sku: item.sku,
+    ...commonProductData,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: item.currency,
+      price: item.price.toFixed(2),
+      availability: item.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      sku: item.sku,
+    },
+  }));
+
+  const structuredData = product.variants.length > 1
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ProductGroup",
+        name: product.name,
+        description: product.description,
+        productGroupID: product.sku,
+        ...commonProductData,
+        hasVariant: variantNodes,
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: product.name,
+        description: product.description,
+        sku: product.sku,
+        ...commonProductData,
+        offers: variantNodes[0]?.offers,
+      };
 
   return (
     <main id="main-content">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+      />
       <section className="section product-detail">
         <div className="container">
           <Link className="text-link" href={`/${locale}/products`}>{copy.back}</Link>
