@@ -31,9 +31,11 @@ for (const [locale, expected] of Object.entries(localeExpectations)) {
         body: Buffer.from(JSON.stringify(layout, null, 2)),
         contentType: "application/json",
       });
-      await testInfo.attach(`${locale}-${testInfo.project.name}.png`, {
-        body: await page.screenshot({ fullPage: true, animations: "disabled" }),
-        contentType: "image/png",
+
+      await expect(page).toHaveScreenshot(`${locale}-home.png`, {
+        fullPage: true,
+        animations: "disabled",
+        maxDiffPixelRatio: 0.01,
       });
     });
 
