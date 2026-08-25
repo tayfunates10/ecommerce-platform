@@ -8,7 +8,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Remaining on `main`: 11%**
 - **Current phase:** Phase 9 — E2E / accessibility / visual regression certification
 - **Current branch:** `qa/e2e-a11y-visual`
-- **Active PR:** Phase 9 browser certification PR
+- **Active PR:** PR #9 — browser certification
 - **Completion after Phase 9 is verified and merged:** 96%
 - **Merge rule:** no phase is counted as complete until required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
 - **Latest verified merge:** PR #8 merged to `main` as `778ba649` after final exact-head CI #86 passed and all review threads were resolved.
@@ -71,6 +71,13 @@ Implemented in the active branch:
 - horizontal-overflow and key-layout visual-contract checks;
 - full-page screenshot evidence attached per locale/viewport;
 - Playwright HTML report, traces/videos on failure and browser-certification artifacts retained by CI.
+
+### Latest CI evidence
+
+- CI #88 passed dependency install, Prisma generate/validate, lint, typecheck, all **24/24 unit/domain tests**, production build and performance budgets.
+- Browser certification then ran **20 tests**; 14 passed and the six TR/EN/DE desktop/mobile keyboard skip-navigation cases failed because `#main-content` was not programmatically focusable after activating the skip link.
+- Production accessibility fix applied on all storefront `main#main-content` targets using `tabIndex={-1}`. The browser test itself was not weakened.
+- A fresh exact-head CI run is required before merge.
 
 ### Required Phase 9 gates
 
