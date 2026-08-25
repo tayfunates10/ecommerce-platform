@@ -65,7 +65,9 @@ Implemented:
 - optional privacy-minimal Web Vitals reporter for LCP/INP/CLS only;
 - RUM transport is opt-in and restricted to a same-origin path; endpoint validation rejects backslashes and verifies resolved origin;
 - `sendBeacon()` now falls back to keepalive `fetch` when the browser refuses to queue the beacon;
-- post-build CI budget checker measures DOM nodes and gzip size of client scripts actually referenced by prerendered HTML `<script src>` tags;
+- post-build CI budget checker measures DOM nodes and gzip size of client scripts actually fetched by modern browsers;
+- `nomodule` compatibility polyfills are excluded from the modern initial-JS budget because module-capable browsers do not fetch them;
+- URL-encoded client chunk paths from Next.js manifests are decoded before filesystem resolution, so dynamic `[locale]` routes are measured instead of failing on `%5B...%5D` paths;
 - dynamic catalog/product storefront routes are explicitly included through their client-reference manifests, and the catalog DOM envelope is coupled to the exported 48-product storefront limit;
 - performance/media regression tests cover CWV budgets, image formats, product-detail LCP priority, same-origin RUM configuration and deferred video behavior;
 - `.env.example` documents the required canonical site origin and optional Web Vitals endpoint.
@@ -77,10 +79,10 @@ Implemented:
 - CI #66 and CI #68 passed dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all 20 tests and production build, then failed only at the performance-budget gate.
 - CI #70 produced the requested exact chunk breakdown and again passed every gate except the unchanged 150KB initial-JS budget.
 - CI #70 measured `_global-error` and `_not-found` at **181.9KB gzip** and TR/EN/DE home routes at **190.0KB gzip**.
-- The dominant shared startup chunks are approximately **69.3KB + 39.5KB + 38.7KB gzip**, proving the majority of the overage is framework/runtime payload shared even by error pages rather than storefront-only code. Home adds about 8.1KB beyond that common baseline.
-- The **150KB initial-JS budget has not been relaxed** and PR #7 remains unmerged.
-- As the next production-side optimization, the branch now builds with `next build --webpack` instead of the default Turbopack production build. The intent is to test whether Webpack emits a materially smaller startup runtime while preserving the exact same acceptance threshold and application behavior.
-- The exact-HEAD CI following this build-mode change must pass dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all tests, production build and the unchanged performance-budget gate before Phase 7 can be completed.
+- Switching the production build to Webpack materially reduced the measured shared startup payload: CI #72 reported `_global-error` and `_not-found` at **161.4KB gzip** while all dependency/Prisma/lint/typecheck/test/build gates passed.
+- CI #72 also exposed two measurement defects rather than a product-code regression: a `nomodule` polyfill chunk (~38.7KB gzip) was being charged to modern browsers even though they do not fetch it, and dynamic-route manifest chunk names containing `[locale]` were URL encoded (`%5B...%5D`) before filesystem lookup.
+- The checker now skips `nomodule` scripts for the modern initial-JS budget and safely decodes URL-encoded chunk paths before lookup. The **150KB budget remains unchanged**.
+- The exact-HEAD CI after this measurement correction must still pass dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all tests, production build, all enforced dynamic/prerendered route budgets and review checks before Phase 7 can be completed.
 - Until that exact-HEAD CI succeeds, the project remains **69% verified / 31% remaining**.
 
 ### Required Phase 7 gates
