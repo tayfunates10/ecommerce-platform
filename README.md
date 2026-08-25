@@ -4,14 +4,14 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 
 ## Canonical project status
 
-- **Verified completion on `main`: 69%**
-- **Remaining on `main`: 31%**
-- **Current phase:** Phase 7 — Media + Core Web Vitals
-- **Current branch:** `perf/media-cwv`
-- **Active PR:** #7 — Performance: media and Core Web Vitals foundation
-- **Completion after Phase 7 is verified and merged:** 79%
-- **Merge rule:** no phase is counted as complete until its required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
-- **Latest verified merge:** PR #6 merged to `main` as `a03817b5` after final CI #57 succeeded and all review threads were resolved.
+- **Verified completion on `main`: 79%**
+- **Remaining on `main`: 21%**
+- **Current phase:** Phase 8 — Checkout + security + analytics
+- **Current branch:** `checkout/security-analytics`
+- **Active PR:** #8 — Checkout: security and analytics foundation
+- **Completion after Phase 8 is verified and merged:** 89%
+- **Merge rule:** no phase is counted as complete until required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
+- **Latest verified merge:** PR #7 merged to `main` as `5f7bed01` after exact-head CI #74 succeeded and all review threads were resolved.
 
 ## Roadmap and weights
 
@@ -22,12 +22,12 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 3. PostgreSQL + data model + backend | 13% | ✅ Complete — PR #3 merged |
 | 4. Product/cart/inventory/order commerce core | 16% | ✅ Complete — PR #4 merged |
 | 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged |
-| 6. TR/EN/DE + technical SEO | 14% | ✅ Complete — PR #6 merged after CI #57 |
-| 7. Media + Core Web Vitals | 10% | 🟡 Active — PR #7 |
-| 8. Checkout + security + analytics | 10% | ⏳ Pending |
+| 6. TR/EN/DE + technical SEO | 14% | ✅ Complete — PR #6 merged |
+| 7. Media + Core Web Vitals | 10% | ✅ Complete — PR #7 merged after CI #74 |
+| 8. Checkout + security + analytics | 10% | 🟡 Active — PR #8 |
 | 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
 | 10. Production certification + release | 4% | ⏳ Pending |
-| **Total** | **100%** | **69% verified on `main`** |
+| **Total** | **100%** | **79% verified on `main`** |
 
 ## Completed phases
 
@@ -37,81 +37,61 @@ Merged in PR #2 after dependency installation, ESLint, TypeScript typecheck, fou
 ### Phase 3 — PostgreSQL + data model + backend
 Merged in PR #3 after Prisma Client generation, Prisma schema validation, lint, typecheck, domain tests and production build passed.
 
-### Phase 4 — Product/cart/inventory/order commerce core
-Merged in PR #4 after final CI run #19 passed and all review threads were resolved.
+### Phase 4 — Commerce Core
+Merged in PR #4 after final CI #19 passed and all review threads were resolved. Includes product/cart/inventory/order rules, transactional order creation and concurrency-safe inventory reservation.
 
-### Phase 5 — UI/UX + responsive storefront
-Merged in PR #5 after final CI run #37 passed and review blockers were resolved.
+### Phase 5 — Responsive Storefront
+Merged in PR #5 after final CI #37 passed and review blockers were resolved. Includes real catalog/product data, responsive product UI and accessible cart interactions.
 
-### Phase 6 — TR/EN/DE + technical SEO
-Merged in PR #6 as `a03817b5` after CI #57 passed.
+### Phase 6 — TR/EN/DE + Technical SEO
+Merged in PR #6 after CI #57 passed. Includes fail-closed canonical origin, localized canonical/hreflang metadata, complete translated-product sitemap, robots policy, Product/ProductGroup JSON-LD, Merchant Center contract and crawl/indexation tests.
 
-Delivered: fail-closed canonical origin, localized canonical/hreflang metadata, runtime complete translated-product sitemap, robots policy, Product/ProductGroup JSON-LD, Merchant Center-compatible product contract, catalog/product SEO templates, crawl/indexation regression tests and resolved review blockers.
+### Phase 7 — Media + Core Web Vitals
+Merged in PR #7 as `5f7bed01` after exact-head CI #74 passed and all review threads were resolved.
 
-## Phase 7 — Media + Core Web Vitals
+Delivered: LCP/INP/CLS engineering budgets, AVIF/WebP media policy, responsive/lazy media, product-detail LCP priority, deferred video, privacy-minimal Web Vitals RUM, same-origin transport validation, Webpack production build, post-build DOM and modern-browser initial-JS enforcement, dynamic route coverage and unchanged **150KB gzip initial-JS** gate.
 
-Active branch: `perf/media-cwv`.  
-Active PR: #7.
+## Phase 8 — Checkout + security + analytics
 
-Implemented:
+Active branch: `checkout/security-analytics`.  
+Active PR: #8.
 
-- centralized engineering performance budget with targets of LCP <= 1.8s, INP <= 150ms and CLS <= 0.05;
-- explicit TTFB <= 500ms, initial client JS <= 150KB gzip and DOM <= 1500 node engineering budgets;
-- Next Image AVIF/WebP output with a 75 quality allowlist;
-- 30-day optimized-image cache TTL and responsive device/image size buckets;
-- catalog product images remain responsive, explicitly lazy-loaded and use the shared image quality budget;
-- product-detail hero image remains responsive and priority-loaded as the expected LCP media candidate;
-- reusable poster-first video primitive with `preload="none"`, `playsInline` and source injection only when the element approaches the viewport;
-- optional privacy-minimal Web Vitals reporter for LCP/INP/CLS only;
-- RUM transport is opt-in and restricted to a same-origin path; endpoint validation rejects backslashes and verifies resolved origin;
-- `sendBeacon()` now falls back to keepalive `fetch` when the browser refuses to queue the beacon;
-- post-build CI budget checker measures DOM nodes and gzip size of client scripts actually fetched by modern browsers;
-- `nomodule` compatibility polyfills are excluded from the modern initial-JS budget because module-capable browsers do not fetch them;
-- URL-encoded client chunk paths from Next.js manifests are decoded before filesystem resolution, so dynamic `[locale]` routes are measured instead of failing on `%5B...%5D` paths;
-- dynamic catalog/product storefront routes are explicitly included through their client-reference manifests, and the catalog DOM envelope is coupled to the exported 48-product storefront limit;
-- performance/media regression tests cover CWV budgets, image formats, product-detail LCP priority, same-origin RUM configuration and deferred video behavior;
-- `.env.example` documents the required canonical site origin and optional Web Vitals endpoint.
+Implemented so far:
 
-### Latest Phase 7 CI/review status
+- fail-closed payment gateway boundary with positive minor-unit amount validation;
+- supported checkout currencies restricted to TRY/EUR/USD;
+- payment idempotency/order identifier validation and deterministic request fingerprinting;
+- HTTPS-only return/action URL validation and provider-response validation;
+- consent-aware first-party analytics event allowlist;
+- analytics payloads strip query strings and reject unsupported event names / unsafe property shapes;
+- hardened global response policy: HSTS, CSP, frame/object restrictions, MIME sniff protection, referrer, permissions and cross-origin policies;
+- finite checkout/payment/analytics rate-limit policy contracts with validated identity keys;
+- regression tests for payment boundary, analytics consent/privacy and security policy behavior.
 
-- CI #60 failed only at ESLint because the deferred-video fallback called `setState` synchronously inside an effect; this was fixed.
-- Three review blockers were addressed: dynamic storefront routes are included in the budget gate, backslash-based same-origin escape is rejected, and failed `sendBeacon` calls fall back to `fetch`.
-- CI #66 and CI #68 passed dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all 20 tests and production build, then failed only at the performance-budget gate.
-- CI #70 produced the requested exact chunk breakdown and again passed every gate except the unchanged 150KB initial-JS budget.
-- CI #70 measured `_global-error` and `_not-found` at **181.9KB gzip** and TR/EN/DE home routes at **190.0KB gzip**.
-- Switching the production build to Webpack materially reduced the measured shared startup payload: CI #72 reported `_global-error` and `_not-found` at **161.4KB gzip** while all dependency/Prisma/lint/typecheck/test/build gates passed.
-- CI #72 also exposed two measurement defects rather than a product-code regression: a `nomodule` polyfill chunk (~38.7KB gzip) was being charged to modern browsers even though they do not fetch it, and dynamic-route manifest chunk names containing `[locale]` were URL encoded (`%5B...%5D`) before filesystem lookup.
-- The checker now skips `nomodule` scripts for the modern initial-JS budget and safely decodes URL-encoded chunk paths before lookup. The **150KB budget remains unchanged**.
-- The exact-HEAD CI after this measurement correction must still pass dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all tests, production build, all enforced dynamic/prerendered route budgets and review checks before Phase 7 can be completed.
-- Until that exact-HEAD CI succeeds, the project remains **69% verified / 31% remaining**.
+### Required Phase 8 gates
 
-### Required Phase 7 gates
-
-- [x] Central CWV engineering budgets defined
-- [x] AVIF/WebP optimized image delivery configured
-- [x] Responsive product image sizing policy
-- [x] Product-detail LCP image priority policy
-- [x] Catalog media lazy-loading policy
-- [x] Optimized image cache policy
-- [x] Privacy-minimal, opt-in RUM hook
-- [x] Same-origin RUM endpoint validation
-- [x] Performance regression tests added
-- [x] Video lazy-load/poster strategy
-- [x] Post-build script/DOM budget enforcement for prerendered pages
-- [x] Dynamic catalog/product routes included in performance budget enforcement
-- [ ] Initial client JS <= 150KB gzip on all enforced routes
-- [ ] Final Phase 7 CI passes on exact HEAD
+- [x] Payment provider boundary contract
+- [x] Payment amount/currency/idempotency validation
+- [x] HTTPS callback/action validation
+- [x] Security headers + CSP policy
+- [x] WAF-facing finite rate-limit contracts
+- [x] Consent-aware first-party analytics payload contract
+- [x] Phase 8 regression tests added
+- [ ] Production checkout orchestration endpoint/service
+- [ ] Persistent/distributed rate-limit enforcement path
+- [ ] Hardened server-side analytics event delivery
+- [ ] Final exact-head CI passes
 - [ ] Final PR diff/review has no unresolved blocker
-- [ ] Phase 7 PR merged to `main`
+- [ ] Phase 8 PR merged to `main`
 
-Phase 7 carries **10%**. It will move verified completion from **69% to 79% only after all required gates pass and PR #7 is merged**.
+Phase 8 carries **10%**. It moves verified completion from **79% to 89% only after all required gates pass and PR #8 is merged**.
 
 ## Progress reporting rule
 
-Every implementation phase must update this README with completed work, tests/CI results, PR/review/merge state, verified completion percentage, remaining percentage and the next planned phase.
+Every implementation phase updates this README with completed work, tests/CI results, PR/review/merge state, verified completion percentage, remaining percentage and the next planned phase.
 
-## Next phase after Phase 7
+## Next phase after Phase 8
 
-**Phase 8 — Checkout + security + analytics (10%)**
+**Phase 9 — E2E / accessibility / visual regression certification (7%)**
 
-Planned scope: production checkout orchestration, payment boundary, security headers/CSP/WAF-facing policy, rate limiting, consent-aware first-party analytics and hardened server-side event delivery.
+Planned scope: browser-level checkout/storefront flows, accessibility certification, keyboard/focus checks, screenshot/visual regression coverage and final cross-viewport regression gates.
