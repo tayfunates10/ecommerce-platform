@@ -23,23 +23,25 @@ function countDomNodes(html) {
   return html.match(/<(?!\/|!|\?)([a-zA-Z][\w:-]*)\b/g)?.length ?? 0;
 }
 
-function scriptChunkPaths(text) {
+function initialScriptChunkPaths(html) {
   const paths = new Set();
-  const patterns = [
-    /<script[^>]+src="\/_next\/static\/([^"]+\.js)"/g,
-    /static\/([^"']+\.js)/g,
-  ];
-  for (const pattern of patterns) {
-    for (const match of text.matchAll(pattern)) {
-      if (match[1]) paths.add(match[1]);
-    }
+  for (const match of html.matchAll(/<script[^>]+src="\/_next\/static\/([^"]+\.js)"/g)) {
+    if (match[1]) paths.add(match[1]);
   }
   return [...paths];
 }
 
-async function gzipBytesForArtifacts(text) {
+function referencedChunkPaths(text) {
+  const paths = new Set(initialScriptChunkPaths(text));
+  for (const match of text.matchAll(/static\/([^"']+\.js)/g)) {
+    if (match[1]) paths.add(match[1]);
+  }
+  return [...paths];
+}
+
+async function gzipBytesForChunks(chunks) {
   let bytes = 0;
-  for (const chunk of scriptChunkPaths(text)) {
+  for (const chunk of chunks) {
     const file = resolve(staticRoot, chunk.split("/").join(sep));
     const metadata = await stat(file).catch(() => null);
     if (!metadata?.isFile()) throw new Error(`Referenced client chunk is missing: ${chunk}`);
@@ -57,7 +59,7 @@ if (htmlFiles.length === 0) {
 for (const file of htmlFiles) {
   const html = await readFile(file, "utf8");
   const domNodes = countDomNodes(html);
-  const jsGzipKb = (await gzipBytesForArtifacts(html)) / 1024;
+  const jsGzipKb = (await gzipBytesForChunks(initialScriptChunkPaths(html))) / 1024;
   const routeArtifact = relative(serverApp, file);
 
   console.log(`${routeArtifact}: DOM=${domNodes}, initial JS gzip=${jsGzipKb.toFixed(1)}KB`);
@@ -86,7 +88,7 @@ for (const route of dynamicRoutes) {
   }
 
   const manifestText = await readFile(route.manifest, "utf8");
-  const jsGzipKb = (await gzipBytesForArtifacts(manifestText)) / 1024;
+  const jsGzipKb = (await gzipBytesForChunks(referencedChunkPaths(manifestText))) / 1024;
   console.log(`${route.name}: DOM envelope=${route.maxDomNodes}, route client JS gzip=${jsGzipKb.toFixed(1)}KB`);
 
   if (route.maxDomNodes > performanceBudget.domNodes) failures.push(`${route.name} DOM envelope ${route.maxDomNodes} > ${performanceBudget.domNodes}`);
