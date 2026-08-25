@@ -39,15 +39,25 @@ function referencedChunkPaths(text) {
   return [...paths];
 }
 
-async function gzipBytesForChunks(chunks) {
+async function gzipBreakdownForChunks(chunks) {
+  const breakdown = [];
   let bytes = 0;
   for (const chunk of chunks) {
     const file = resolve(staticRoot, chunk.split("/").join(sep));
     const metadata = await stat(file).catch(() => null);
     if (!metadata?.isFile()) throw new Error(`Referenced client chunk is missing: ${chunk}`);
-    bytes += gzipSync(await readFile(file)).byteLength;
+    const gzipBytes = gzipSync(await readFile(file)).byteLength;
+    bytes += gzipBytes;
+    breakdown.push({ chunk, gzipBytes });
   }
-  return bytes;
+  breakdown.sort((a, b) => b.gzipBytes - a.gzipBytes);
+  return { bytes, breakdown };
+}
+
+function logChunkBreakdown(label, breakdown) {
+  for (const { chunk, gzipBytes } of breakdown) {
+    console.log(`  ${label} chunk ${chunk}: ${(gzipBytes / 1024).toFixed(1)}KB gzip`);
+  }
 }
 
 const failures = [];
@@ -59,10 +69,15 @@ if (htmlFiles.length === 0) {
 for (const file of htmlFiles) {
   const html = await readFile(file, "utf8");
   const domNodes = countDomNodes(html);
-  const jsGzipKb = (await gzipBytesForChunks(initialScriptChunkPaths(html))) / 1024;
   const routeArtifact = relative(serverApp, file);
+  const initialChunks = initialScriptChunkPaths(html);
+  const { bytes: jsGzipBytes, breakdown } = await gzipBreakdownForChunks(initialChunks);
+  const jsGzipKb = jsGzipBytes / 1024;
 
   console.log(`${routeArtifact}: DOM=${domNodes}, initial JS gzip=${jsGzipKb.toFixed(1)}KB`);
+  if (jsGzipKb > performanceBudget.initialJsGzipKb) {
+    logChunkBreakdown(routeArtifact, breakdown);
+  }
   if (domNodes > performanceBudget.domNodes) failures.push(`${routeArtifact} DOM ${domNodes} > ${performanceBudget.domNodes}`);
   if (jsGzipKb > performanceBudget.initialJsGzipKb) failures.push(`${routeArtifact} initial JS ${jsGzipKb.toFixed(1)}KB > ${performanceBudget.initialJsGzipKb}KB`);
 }
@@ -88,8 +103,13 @@ for (const route of dynamicRoutes) {
   }
 
   const manifestText = await readFile(route.manifest, "utf8");
-  const jsGzipKb = (await gzipBytesForChunks(referencedChunkPaths(manifestText))) / 1024;
+  const routeChunks = referencedChunkPaths(manifestText);
+  const { bytes: jsGzipBytes, breakdown } = await gzipBreakdownForChunks(routeChunks);
+  const jsGzipKb = jsGzipBytes / 1024;
   console.log(`${route.name}: DOM envelope=${route.maxDomNodes}, route client JS gzip=${jsGzipKb.toFixed(1)}KB`);
+  if (jsGzipKb > performanceBudget.initialJsGzipKb) {
+    logChunkBreakdown(route.name, breakdown);
+  }
 
   if (route.maxDomNodes > performanceBudget.domNodes) failures.push(`${route.name} DOM envelope ${route.maxDomNodes} > ${performanceBudget.domNodes}`);
   if (jsGzipKb > performanceBudget.initialJsGzipKb) failures.push(`${route.name} client JS ${jsGzipKb.toFixed(1)}KB > ${performanceBudget.initialJsGzipKb}KB`);
