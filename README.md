@@ -8,10 +8,11 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Remaining on `main`: 45%**
 - **Current phase:** TR/EN/DE + technical SEO
 - **Current branch:** `seo/i18n-foundation`
-- **Active PR:** Phase 6 PR
+- **Active PR:** #6 — SEO: multilingual technical foundation
 - **Completion after this phase is verified and merged:** 69%
 - **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
 - **Latest verified CI evidence:** Phase 5 final CI run #37 passed on commit `44ec27fc`.
+- **Latest Phase 6 CI evidence:** CI #39 passed dependency install, Prisma generate/validate, ESLint, typecheck and all tests, but production build failed because `/sitemap.xml` attempted a PostgreSQL query during prerender with no CI database service. The sitemap is now explicitly runtime-generated (`force-dynamic`); final HEAD requires a fresh fully green CI run.
 - **Latest verified merge:** PR #5 merged to `main` as commit `5946c36d`.
 
 ## Roadmap and weights
@@ -23,7 +24,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 3. PostgreSQL + data model + backend | 13% | ✅ Complete — PR #3 merged |
 | 4. Product/cart/inventory/order commerce core | 16% | ✅ Complete — PR #4 merged |
 | 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged after CI #37 |
-| 6. TR/EN/DE + technical SEO | 14% | 🟡 In progress |
+| 6. TR/EN/DE + technical SEO | 14% | 🟡 In progress — PR #6 |
 | 7. Media + Core Web Vitals | 10% | ⏳ Pending |
 | 8. Checkout + security + analytics | 10% | ⏳ Pending |
 | 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
@@ -57,27 +58,31 @@ Implemented so far:
 - reciprocal TR/EN/DE hreflang plus `x-default` helpers;
 - locale-layout metadata base, canonical, alternates and Open Graph metadata;
 - production `robots.ts` policy with sitemap declaration;
-- localized dynamic sitemap for home, products and active product URLs;
+- localized runtime sitemap for home, catalog and active product URLs without build-time database dependency;
+- localized catalog SEO metadata template;
 - localized product metadata generated from real product data;
-- Product JSON-LD with SKU, brand, image, Offer price/currency/availability from the same product read model;
+- Product JSON-LD with SKU, brand, image and Offer price/currency/availability;
+- ProductGroup/hasVariant JSON-LD for products with multiple sellable variants;
+- Merchant Center-compatible normalized product data contract;
+- crawl/indexation regression tests for hreflang, robots, sitemap, canonical metadata, structured data and merchant fields;
 - JSON-LD `<` escaping to avoid script-breakout injection.
 
 ### Required Phase 6 gates
 
 - [ ] Dependency installation passes on final Phase 6 HEAD
-- [ ] Prisma Client generation/validation passes
-- [ ] ESLint passes with zero warnings
-- [ ] TypeScript typecheck passes
-- [ ] Tests pass
-- [ ] Production build passes
+- [ ] Prisma Client generation/validation passes on final HEAD
+- [ ] ESLint passes with zero warnings on final HEAD
+- [ ] TypeScript typecheck passes on final HEAD
+- [ ] Tests pass on final HEAD
+- [ ] Production build passes on final HEAD
 - [x] Localized canonical URL foundation
 - [x] Reciprocal TR/EN/DE hreflang + x-default foundation
-- [x] robots policy + sitemap endpoint
+- [x] robots policy + runtime sitemap endpoint
 - [x] Product structured data foundation using real commerce data
-- [ ] ProductGroup/variant structured data where multiple sellable variants exist
-- [ ] Category/product SEO templates completed
-- [ ] Merchant Center-compatible product feed/data contract
-- [ ] Crawl/indexation quality tests
+- [x] ProductGroup/variant structured data where multiple sellable variants exist
+- [x] Catalog/product SEO templates completed
+- [x] Merchant Center-compatible product data contract
+- [x] Crawl/indexation quality tests
 - [ ] PR review/diff has no unresolved blocking defect
 - [ ] Phase 6 PR merged to `main`
 
