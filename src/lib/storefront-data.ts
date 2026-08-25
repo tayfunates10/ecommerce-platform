@@ -1,5 +1,7 @@
 import type { Locale } from "@/i18n/config";
 
+export const STOREFRONT_PRODUCT_LIMIT = 48;
+
 type ProductReadRecord = {
   id: string;
   slug: string;
@@ -77,7 +79,7 @@ export async function listStorefrontProducts(locale: Locale): Promise<Storefront
   if (!process.env.DATABASE_URL) return [];
   const { db } = await import("@/lib/db");
   const products = await db.product.findMany({
-    where: { status: "ACTIVE" }, orderBy: { updatedAt: "desc" }, take: 48,
+    where: { status: "ACTIVE" }, orderBy: { updatedAt: "desc" }, take: STOREFRONT_PRODUCT_LIMIT,
     include: {
       translations: { where: { locale: dbLocale[locale] }, take: 1 },
       media: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }], take: 1 },

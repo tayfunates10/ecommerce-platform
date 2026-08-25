@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
+import { performanceBudget } from "@/lib/performance";
 import type { StorefrontProduct } from "@/lib/storefront-data";
 
 function formatMoney(amount: number, currency: string, locale: Locale) {
@@ -19,6 +20,8 @@ export function ProductCard({ product, locale }: { product: StorefrontProduct; l
             width={product.image.width ?? 800}
             height={product.image.height ?? 800}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={performanceBudget.productImageQuality}
+            loading="lazy"
           />
         ) : (
           <div className="product-card__placeholder" aria-hidden="true" />

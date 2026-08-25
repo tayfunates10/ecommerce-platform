@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCartButton } from "@/components/storefront/cart-ui";
 import { isLocale, type Locale } from "@/i18n/config";
+import { performanceBudget } from "@/lib/performance";
 import { getStorefrontProduct } from "@/lib/storefront-data";
 import { getProductTranslationLocales } from "@/lib/seo-product-data";
 import { absoluteUrl, localeAlternates, localizedPath, siteName } from "@/lib/seo";
@@ -125,6 +126,7 @@ export default async function ProductPage({
                   width={product.image.width ?? 1200}
                   height={product.image.height ?? 1200}
                   sizes="(max-width: 900px) 100vw, 50vw"
+                  quality={performanceBudget.productImageQuality}
                   priority
                 />
               ) : (

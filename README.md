@@ -4,16 +4,14 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 
 ## Canonical project status
 
-- **Verified completion on `main`: 55%**
-- **Remaining on `main`: 45%**
-- **Current phase:** TR/EN/DE + technical SEO
-- **Current branch:** `seo/i18n-foundation`
-- **Active PR:** #6 — SEO: multilingual technical foundation
-- **Completion after this phase is verified and merged:** 69%
-- **Merge rule:** no phase is counted as complete until its required CI/tests pass and the PR is merged into `main`.
-- **Latest verified CI evidence:** Phase 6 final implementation HEAD `dc72a048` passed CI run #56: dependency installation, Prisma Client generation/schema validation, ESLint, TypeScript typecheck, tests and production build all succeeded.
-- **Review status:** all four Phase 6 review threads are resolved; no unresolved blocking review thread remains.
-- **Latest verified merge:** PR #5 merged to `main` as commit `5946c36d`.
+- **Verified completion on `main`: 69%**
+- **Remaining on `main`: 31%**
+- **Current phase:** Phase 7 — Media + Core Web Vitals
+- **Current branch:** `perf/media-cwv`
+- **Active PR:** #7 — Performance: media and Core Web Vitals foundation
+- **Completion after Phase 7 is verified and merged:** 79%
+- **Merge rule:** no phase is counted as complete until its required CI/tests pass, review blockers are resolved and the PR is merged into `main`.
+- **Latest verified merge:** PR #6 merged to `main` as `a03817b5` after final CI #57 succeeded and all review threads were resolved.
 
 ## Roadmap and weights
 
@@ -23,13 +21,13 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 2. Repository foundation + Next.js + CI/CD | 7% | ✅ Complete — PR #2 merged |
 | 3. PostgreSQL + data model + backend | 13% | ✅ Complete — PR #3 merged |
 | 4. Product/cart/inventory/order commerce core | 16% | ✅ Complete — PR #4 merged |
-| 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged after CI #37 |
-| 6. TR/EN/DE + technical SEO | 14% | 🟢 Merge candidate — implementation HEAD passed CI #56, review blockers resolved |
-| 7. Media + Core Web Vitals | 10% | ⏳ Pending |
+| 5. UI/UX + responsive storefront | 14% | ✅ Complete — PR #5 merged |
+| 6. TR/EN/DE + technical SEO | 14% | ✅ Complete — PR #6 merged after CI #57 |
+| 7. Media + Core Web Vitals | 10% | 🟡 Active — PR #7 |
 | 8. Checkout + security + analytics | 10% | ⏳ Pending |
 | 9. E2E/a11y/visual regression certification | 7% | ⏳ Pending |
 | 10. Production certification + release | 4% | ⏳ Pending |
-| **Total** | **100%** | **55% verified on `main`** |
+| **Total** | **100%** | **69% verified on `main`** |
 
 ## Completed phases
 
@@ -45,60 +43,75 @@ Merged in PR #4 after final CI run #19 passed and all review threads were resolv
 ### Phase 5 — UI/UX + responsive storefront
 Merged in PR #5 after final CI run #37 passed and review blockers were resolved.
 
-Delivered: accessible responsive storefront shell, real database-backed product listing/detail read model, localized TR/EN/DE navigation, stock-aware purchase controls, cart drawer interactions, responsive safeguards and honest empty states.
+### Phase 6 — TR/EN/DE + technical SEO
+Merged in PR #6 as `a03817b5` after CI #57 passed.
 
-## Phase 6 — TR/EN/DE + technical SEO
+Delivered: fail-closed canonical origin, localized canonical/hreflang metadata, runtime complete translated-product sitemap, robots policy, Product/ProductGroup JSON-LD, Merchant Center-compatible product contract, catalog/product SEO templates, crawl/indexation regression tests and resolved review blockers.
 
-Active branch: `seo/i18n-foundation`.
+## Phase 7 — Media + Core Web Vitals
+
+Active branch: `perf/media-cwv`.  
+Active PR: #7.
 
 Implemented:
 
-- shared production site URL / absolute URL SEO helpers;
-- fail-closed canonical origin requiring an explicit HTTPS `NEXT_PUBLIC_SITE_URL`;
-- localized canonical URL construction;
-- reciprocal TR/EN/DE hreflang plus `x-default` helpers;
-- product hreflang restricted to translations that actually exist;
-- locale-layout metadata base, canonical, alternates and Open Graph metadata;
-- localized catalog SEO metadata template;
-- production `robots.ts` policy with sitemap declaration;
-- localized runtime sitemap for home, catalog and every translated active product URL without the storefront 48-item cap or build-time database dependency;
-- localized product metadata generated from real product data;
-- Product JSON-LD with SKU, brand, image and Offer price/currency/availability;
-- ProductGroup/hasVariant JSON-LD for products with multiple sellable variants;
-- Merchant Center-compatible normalized product data contract;
-- crawl/indexation regression tests for hreflang, robots, sitemap completeness, canonical metadata, structured data, fail-closed origin and merchant fields;
-- JSON-LD `<` escaping to avoid script-breakout injection;
-- duplicate JSON-LD field construction removed after CI #54 TypeScript validation caught spread overwrite risk.
+- centralized engineering performance budget with targets of LCP <= 1.8s, INP <= 150ms and CLS <= 0.05;
+- explicit TTFB <= 500ms, initial client JS <= 150KB gzip and DOM <= 1500 node engineering budgets;
+- Next Image AVIF/WebP output with a 75 quality allowlist;
+- 30-day optimized-image cache TTL and responsive device/image size buckets;
+- catalog product images remain responsive, explicitly lazy-loaded and use the shared image quality budget;
+- product-detail hero image remains responsive and priority-loaded as the expected LCP media candidate;
+- reusable poster-first video primitive with `preload="none"`, `playsInline` and source injection only when the element approaches the viewport;
+- optional privacy-minimal Web Vitals reporter for LCP/INP/CLS only;
+- RUM transport is opt-in and restricted to a same-origin path; endpoint validation rejects backslashes and verifies resolved origin;
+- `sendBeacon()` now falls back to keepalive `fetch` when the browser refuses to queue the beacon;
+- post-build CI budget checker measures DOM nodes and gzip size of client scripts actually fetched by modern browsers;
+- `nomodule` compatibility polyfills are excluded from the modern initial-JS budget because module-capable browsers do not fetch them;
+- URL-encoded client chunk paths from Next.js manifests are decoded before filesystem resolution, so dynamic `[locale]` routes are measured instead of failing on `%5B...%5D` paths;
+- dynamic catalog/product storefront routes are explicitly included through their client-reference manifests, and the catalog DOM envelope is coupled to the exported 48-product storefront limit;
+- performance/media regression tests cover CWV budgets, image formats, product-detail LCP priority, same-origin RUM configuration and deferred video behavior;
+- `.env.example` documents the required canonical site origin and optional Web Vitals endpoint.
 
-### Required Phase 6 gates
+### Latest Phase 7 CI/review status
 
-- [x] Dependency installation passes on final implementation HEAD — CI #56
-- [x] Prisma Client generation/validation passes — CI #56
-- [x] ESLint passes with zero warnings — CI #56
-- [x] TypeScript typecheck passes — CI #56
-- [x] Tests pass — CI #56
-- [x] Production build passes — CI #56
-- [x] Localized canonical URL foundation
-- [x] Reciprocal TR/EN/DE hreflang + x-default foundation
-- [x] Product hreflang only targets available translations
-- [x] robots policy + runtime sitemap endpoint
-- [x] Complete translated-product sitemap query without 48-item storefront cap
-- [x] Product structured data foundation using real commerce data
-- [x] ProductGroup/variant structured data where multiple sellable variants exist
-- [x] Catalog/product SEO templates completed
-- [x] Merchant Center-compatible product data contract
-- [x] Crawl/indexation quality tests
-- [x] PR review/diff blockers identified so far are resolved
-- [ ] Phase 6 PR merged to `main`
+- CI #60 failed only at ESLint because the deferred-video fallback called `setState` synchronously inside an effect; this was fixed.
+- Three review blockers were addressed: dynamic storefront routes are included in the budget gate, backslash-based same-origin escape is rejected, and failed `sendBeacon` calls fall back to `fetch`.
+- CI #66 and CI #68 passed dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all 20 tests and production build, then failed only at the performance-budget gate.
+- CI #70 produced the requested exact chunk breakdown and again passed every gate except the unchanged 150KB initial-JS budget.
+- CI #70 measured `_global-error` and `_not-found` at **181.9KB gzip** and TR/EN/DE home routes at **190.0KB gzip**.
+- Switching the production build to Webpack materially reduced the measured shared startup payload: CI #72 reported `_global-error` and `_not-found` at **161.4KB gzip** while all dependency/Prisma/lint/typecheck/test/build gates passed.
+- CI #72 also exposed two measurement defects rather than a product-code regression: a `nomodule` polyfill chunk (~38.7KB gzip) was being charged to modern browsers even though they do not fetch it, and dynamic-route manifest chunk names containing `[locale]` were URL encoded (`%5B...%5D`) before filesystem lookup.
+- The checker now skips `nomodule` scripts for the modern initial-JS budget and safely decodes URL-encoded chunk paths before lookup. The **150KB budget remains unchanged**.
+- The exact-HEAD CI after this measurement correction must still pass dependency install, Prisma generate/validate, ESLint, TypeScript typecheck, all tests, production build, all enforced dynamic/prerendered route budgets and review checks before Phase 7 can be completed.
+- Until that exact-HEAD CI succeeds, the project remains **69% verified / 31% remaining**.
 
-The implementation HEAD passed all required quality gates. This documentation-only progress commit must also pass repository CI before PR #6 is merged. Only after merge will this README report **69% verified / 31% remaining**.
+### Required Phase 7 gates
+
+- [x] Central CWV engineering budgets defined
+- [x] AVIF/WebP optimized image delivery configured
+- [x] Responsive product image sizing policy
+- [x] Product-detail LCP image priority policy
+- [x] Catalog media lazy-loading policy
+- [x] Optimized image cache policy
+- [x] Privacy-minimal, opt-in RUM hook
+- [x] Same-origin RUM endpoint validation
+- [x] Performance regression tests added
+- [x] Video lazy-load/poster strategy
+- [x] Post-build script/DOM budget enforcement for prerendered pages
+- [x] Dynamic catalog/product routes included in performance budget enforcement
+- [ ] Initial client JS <= 150KB gzip on all enforced routes
+- [ ] Final Phase 7 CI passes on exact HEAD
+- [ ] Final PR diff/review has no unresolved blocker
+- [ ] Phase 7 PR merged to `main`
+
+Phase 7 carries **10%**. It will move verified completion from **69% to 79% only after all required gates pass and PR #7 is merged**.
 
 ## Progress reporting rule
 
 Every implementation phase must update this README with completed work, tests/CI results, PR/review/merge state, verified completion percentage, remaining percentage and the next planned phase.
 
-## Next phase after Phase 6
+## Next phase after Phase 7
 
-**Phase 7 — Media + Core Web Vitals (10%)**
+**Phase 8 — Checkout + security + analytics (10%)**
 
-Planned scope: responsive AVIF/WebP image delivery, media budgets, video loading strategy, font and LCP hardening, script/DOM budgets, RUM hooks and automated Core Web Vitals regression gates.
+Planned scope: production checkout orchestration, payment boundary, security headers/CSP/WAF-facing policy, rate limiting, consent-aware first-party analytics and hardened server-side event delivery.
