@@ -26,7 +26,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 7. Media + Core Web Vitals | 10% | ✅ Complete — PR #7 merged after CI #74 |
 | 8. Checkout + security + analytics | 10% | ✅ Complete — PR #8 merged after CI #86 |
 | 9. E2E/a11y/visual regression certification | 7% | ✅ Complete — PR #9 merged after CI #97 |
-| 10. Production certification + release | 4% | 🟡 Active |
+| 10. Production certification + release | 4% | 🟡 Active — code/CI green, production evidence blocked |
 | **Total** | **100%** | **96% verified on `main`** |
 
 ## Completed phases
@@ -90,11 +90,10 @@ Implemented so far:
 - [x] Phase 10 HEAD `1627f280` passed mandatory CI as run #101
 - [x] Build-time public environment ordering review blocker fixed
 - [x] Migration/rollback compatibility review blocker fixed
-- [x] Review blockers resolved on the CI #101 HEAD
+- [x] Review blockers resolved
 - [x] Automated public production smoke verifier implemented
-- [x] CI #106 root cause identified: release-verifier tests supplied the target as a CLI argument while an intentionally empty `PRODUCTION_URL` environment value took precedence
-- [x] CI #106 regression fixed without weakening production validation: verifier now treats an empty environment value as absent and correctly falls back to the CLI target
-- [ ] Exact latest Phase 10 HEAD after the CI #106 fix passes all mandatory CI/browser/performance gates
+- [x] CI #106 root cause identified and fixed without weakening production validation
+- [x] Phase 10 HEAD `54ae7ed34a521e6ecbfc4191fe4f796efc128d1f` passed all mandatory CI/browser/performance gates as run #108
 - [ ] Production deployment/readiness evidence captured against the real target environment
 - [ ] Production migration and rollback-compatibility evidence captured
 - [ ] Production SEO/security/a11y/performance/checkout smoke checks verified
@@ -102,7 +101,9 @@ Implemented so far:
 
 ### Current release blocker
 
-No real production hostname/deployment target is committed or otherwise available in the repository. The project therefore remains fail-closed at **96% verified**: no example domain, localhost target, synthetic migration result or synthetic checkout result will be accepted as production evidence.
+All repository-controlled Phase 10 quality gates are green and review blocker count is zero. The remaining blocker is external production evidence: no real production hostname/deployment target, production database migration result or payment checkout target is committed or otherwise available to the repository.
+
+The project therefore remains fail-closed at **96% verified**. No example domain, localhost target, synthetic migration result or synthetic checkout result will be accepted as production evidence.
 
 Once the exact candidate SHA is deployed, run the public production verifier documented in `docs/production-release.md`; then capture the remaining migration, rollback-compatibility, checkout, accessibility and performance evidence against the same release SHA.
 
