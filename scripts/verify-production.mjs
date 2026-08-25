@@ -109,7 +109,8 @@ function assertSecurityHeaders(response, label) {
   }
 }
 
-const origin = normalizeOrigin(process.env.PRODUCTION_URL ?? process.argv[2]);
+const productionUrl = process.env.PRODUCTION_URL?.trim() || process.argv[2];
+const origin = normalizeOrigin(productionUrl);
 const releaseSha = normalizeReleaseSha(process.env.RELEASE_SHA);
 const evidenceOutput = process.env.RELEASE_EVIDENCE_OUTPUT?.trim() || null;
 const startedAt = new Date().toISOString();
@@ -151,8 +152,6 @@ const evidence = {
   startedAt,
   verifiedAt: new Date().toISOString(),
   checks,
-  certificationNote:
-    "This evidence covers public HTTPS/SEO/security smoke checks only. Migration, rollback compatibility, checkout/payment, accessibility and performance promotion gates remain separately required by docs/production-release.md.",
 };
 
 if (evidenceOutput) {
