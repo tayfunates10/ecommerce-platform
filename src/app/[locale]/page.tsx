@@ -61,7 +61,7 @@ export default async function HomePage({
   const content = copy[locale];
 
   return (
-    <main id="main-content">
+    <main id="main-content" tabIndex={-1}>
       <section className="hero" aria-labelledby="hero-title">
         <div className="container hero__inner">
           <div className="hero__content">
