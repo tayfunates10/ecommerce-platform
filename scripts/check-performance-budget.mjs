@@ -23,10 +23,23 @@ function countDomNodes(html) {
   return html.match(/<(?!\/|!|\?)([a-zA-Z][\w:-]*)\b/g)?.length ?? 0;
 }
 
+function decodeChunkPath(path) {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    throw new Error(`Referenced client chunk has invalid URL encoding: ${path}`);
+  }
+}
+
 function initialScriptChunkPaths(html) {
   const paths = new Set();
-  for (const match of html.matchAll(/<script[^>]+src="\/_next\/static\/([^"]+\.js)"/g)) {
-    if (match[1]) paths.add(match[1]);
+  for (const tagMatch of html.matchAll(/<script\b[^>]*>/gi)) {
+    const tag = tagMatch[0];
+    // `nomodule` polyfills are intentionally not fetched by modern module-capable browsers,
+    // so they must not be charged against the modern initial-JS engineering budget.
+    if (/\bnomodule\b/i.test(tag)) continue;
+    const srcMatch = tag.match(/\bsrc="\/_next\/static\/([^"]+\.js)"/i);
+    if (srcMatch?.[1]) paths.add(decodeChunkPath(srcMatch[1]));
   }
   return [...paths];
 }
@@ -34,7 +47,7 @@ function initialScriptChunkPaths(html) {
 function referencedChunkPaths(text) {
   const paths = new Set(initialScriptChunkPaths(text));
   for (const match of text.matchAll(/static\/([^"']+\.js)/g)) {
-    if (match[1]) paths.add(match[1]);
+    if (match[1]) paths.add(decodeChunkPath(match[1]));
   }
   return [...paths];
 }
