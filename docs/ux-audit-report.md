@@ -48,7 +48,7 @@ found outside the browser suite.
 | BUG-19 | 🔵 Low | `.env.example` documents a Web Vitals endpoint that does not exist |
 | PROC-01 | 🟠 High | CI has no database, so no pipeline step has ever rendered a commerce page |
 | PROC-02 | 🟡 Medium | Byte-exact screenshot fingerprints are an unstable visual gate |
-| PROC-03 | 🟡 Medium | No lockfile is committed |
+| PROC-03 | 🟡 Medium | No lockfile was committed — **addressed in this branch** |
 | PROC-04 | 🔵 Low | `npm run build` mutates tracked files |
 
 ---
@@ -536,14 +536,20 @@ baselines.
 stores the baseline image, produces a visual diff on failure and tolerates
 sub-pixel rendering noise.
 
-### PROC-03 — No lockfile is committed
+### PROC-03 — No lockfile was committed *(addressed in this branch)*
 
-`package-lock.json` is untracked. CI runs `npm install` and then uploads the
-generated lockfile as a build artifact. Dependency resolution therefore differs
+`package-lock.json` was untracked. CI runs `npm install` and then uploads the
+generated lockfile as a build artifact, so dependency resolution differed
 between every CI run and production, and the ranges in `devDependencies`
-(`^4.10.2`, `^1.55.0`, `^9.0.0`, `^5.9.0`) can drift silently.
+(`^4.10.2`, `^1.55.0`, `^9.0.0`, `^5.9.0`) could drift silently.
 
-**Fix.** Commit `package-lock.json` and switch CI to `npm ci`.
+This branch commits the lockfile (548 locked packages, `lockfileVersion` 3,
+verified with `npm ci --dry-run`). It is the one finding here that is fixed
+rather than only reported, because the audit's own `npm install` produced the
+file and leaving it untracked would have been the same defect.
+
+**Remaining.** Switch the CI install step from `npm install` to `npm ci` so the
+committed lockfile is actually enforced rather than merely present.
 
 ### PROC-04 — `npm run build` mutates tracked files
 
