@@ -6,7 +6,7 @@ const launchOptions = executablePath ? { executablePath } : undefined;
 
 export default defineConfig({
   testDir: ".",
-  testMatch: "ux-audit.spec.mjs",
+  testMatch: ["ux-audit.spec.mjs", "ux-audit-round-2.spec.mjs"],
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,
   retries: 0,
