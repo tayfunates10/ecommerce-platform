@@ -183,11 +183,6 @@ html {
     scroll-margin-block-start: 9rem;
   }
 
-  .site-header__inner {
-    gap: 0.25rem;
-    padding-block: 0.25rem;
-  }
-
   .catalog-toolbar {
     align-items: stretch;
     flex-direction: column;
@@ -210,5 +205,12 @@ html {
   .pagination a:first-child,
   .pagination a:last-child {
     justify-self: start;
+  }
+}
+
+@media (max-width: 22rem) {
+  .site-header__inner {
+    gap: 0.25rem;
+    padding-block: 0.25rem;
   }
 }
