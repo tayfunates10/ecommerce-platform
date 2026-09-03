@@ -75,13 +75,34 @@ Repository-controlled Phase 10 implementation in PR #13:
 - mandatory HTTPS, exact 40-character release SHA and origin-only validation;
 - build-time `RELEASE_SHA` identity exposed as `X-Release-SHA` on public responses;
 - verifier requires `X-Release-SHA` to equal the exact candidate SHA on every checked response;
-- localhost, reserved `.local`/`.test`/`.invalid`, example domains and IP literals rejected as production evidence;
+- localhost, reserved `.local`/`.test`/`.invalid`, example domains, IP literals and trailing-dot reserved-host variants rejected as production evidence;
 - each public request has a bounded timeout;
 - every redirect hop must remain HTTPS on the exact certified production origin and is capped at five redirects;
 - exact TR/EN/DE + `x-default` canonical/hreflang target validation;
 - mandatory production security-header checks with `X-Powered-By` rejection;
-- robots/sitemap localized storefront verification;
-- regression tests for invalid/synthetic targets, release-identity mismatch and cross-origin redirect rejection without external network dependence.
+- robots evidence requires an active exact `Sitemap:` directive rather than a substring/comment match;
+- sitemap evidence parses `<loc>` entries and requires exact `/tr`, `/en` and `/de` storefront roots;
+- regression tests cover invalid/synthetic targets, trailing-dot host bypasses, release-identity mismatch, cross-origin redirects, robots false positives and sitemap-prefix false positives without external network dependence.
+
+### Latest repository-controlled Phase 10 evidence
+
+Implementation HEAD `b3c5ba555750e9ceb365abfa4c4d45d54b014e64` passed **CI #166** before this README evidence commit:
+
+- Prisma generate/validate: ✅
+- committed migrations on empty PostgreSQL: ✅
+- Prisma/database zero drift: ✅
+- audit fixture seed: ✅
+- lint: ✅
+- typecheck: ✅
+- unit/domain/release regression tests: **38/38 PASS**
+- production build: ✅
+- tracked-file clean-build gate: ✅
+- performance budgets: ✅
+- browser E2E/accessibility/visual regression: **20/20 PASS**
+- database-backed usage/UI/UX audit: **76/76 PASS**
+- PR #13 review threads after fixes: **0 open**
+
+This README evidence commit must itself pass one fresh exact-head CI run before repository-controlled Phase 10 evidence is considered final. That CI success still does **not** substitute for real production deployment evidence.
 
 ### Required Phase 10 evidence
 
@@ -95,7 +116,7 @@ Repository CI success alone is not enough. Before Phase 10 can move the project 
 - [ ] production checkout/payment smoke without duplicate order/payment creation;
 - [ ] production accessibility/performance smoke;
 - [ ] final SHA-bound deployment evidence record;
-- [ ] exact-head PR #13 CI green and review blockers zero;
+- [ ] final exact-head PR #13 CI green and review blockers zero;
 - [ ] PR #13 merged to `main`.
 
 The project therefore remains intentionally **96% verified / 4% remaining** until these real production requirements exist. Synthetic/example results are never accepted as production PASS evidence.
