@@ -70,6 +70,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Assert build leaves tracked files clean
+        run: git diff --exit-code -- .
+
       - name: Enforce performance budgets
         run: npm run perf:budget
 
