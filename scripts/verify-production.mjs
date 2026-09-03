@@ -11,6 +11,8 @@ const REQUIRED_SECURITY_HEADERS = [
 
 const LOCALES = ["tr", "en", "de"];
 const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_REDIRECTS = 5;
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 function fail(message) {
   throw new Error(message);
@@ -74,28 +76,55 @@ function normalizeReleaseSha(rawValue) {
   return value.toLowerCase();
 }
 
-async function fetchChecked(url, label, expectedOrigin) {
-  let response;
+async function fetchOnce(url, label) {
   try {
-    response = await fetch(url, {
-      redirect: "follow",
-      headers: { "user-agent": "ecommerce-platform-production-certifier/1.1" },
+    return await fetch(url, {
+      redirect: "manual",
+      headers: { "user-agent": "ecommerce-platform-production-certifier/1.2" },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
     const reason = error?.name === "TimeoutError" ? "timed out" : "failed";
     fail(`${label} request ${reason}.`);
   }
+}
 
-  if (!response.ok) fail(`${label} returned HTTP ${response.status}.`);
+async function fetchChecked(url, label, expectedOrigin) {
+  let currentUrl = new URL(url);
 
-  const finalUrl = new URL(response.url);
-  if (finalUrl.protocol !== "https:") fail(`${label} redirected away from HTTPS.`);
-  if (finalUrl.origin !== expectedOrigin) {
-    fail(`${label} redirected away from the certified production origin.`);
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+    if (currentUrl.protocol !== "https:") fail(`${label} redirected away from HTTPS.`);
+    if (currentUrl.origin !== expectedOrigin) {
+      fail(`${label} redirected away from the certified production origin.`);
+    }
+
+    const response = await fetchOnce(currentUrl, label);
+
+    if (REDIRECT_STATUSES.has(response.status)) {
+      if (redirectCount === MAX_REDIRECTS) fail(`${label} exceeded ${MAX_REDIRECTS} redirects.`);
+      const location = response.headers.get("location");
+      if (!location) fail(`${label} returned a redirect without a Location header.`);
+
+      let nextUrl;
+      try {
+        nextUrl = new URL(location, currentUrl);
+      } catch {
+        fail(`${label} returned an invalid redirect Location.`);
+      }
+
+      if (nextUrl.protocol !== "https:") fail(`${label} redirected away from HTTPS.`);
+      if (nextUrl.origin !== expectedOrigin) {
+        fail(`${label} redirected away from the certified production origin.`);
+      }
+      currentUrl = nextUrl;
+      continue;
+    }
+
+    if (!response.ok) fail(`${label} returned HTTP ${response.status}.`);
+    return response;
   }
 
-  return response;
+  fail(`${label} exceeded ${MAX_REDIRECTS} redirects.`);
 }
 
 function getLinkTags(html) {
@@ -202,6 +231,7 @@ const evidence = {
   releaseSha,
   origin,
   requestTimeoutMs: REQUEST_TIMEOUT_MS,
+  maxRedirects: MAX_REDIRECTS,
   startedAt,
   verifiedAt: new Date().toISOString(),
   checks,
