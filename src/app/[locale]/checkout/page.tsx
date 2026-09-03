@@ -17,6 +17,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const content = copy[locale];
+  const checkoutAvailable = process.env.NODE_ENV !== "production";
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -29,7 +30,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
       </section>
       <section className="section">
         <div className="container checkout-layout">
-          <CheckoutForm locale={locale} />
+          <CheckoutForm locale={locale} checkoutAvailable={checkoutAvailable} />
         </div>
       </section>
     </main>

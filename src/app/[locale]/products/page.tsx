@@ -15,6 +15,7 @@ const copy: Record<Locale, {
   searchLabel: string;
   searchPlaceholder: string;
   searchButton: string;
+  localeFallbackNotice: string;
   results: (count: number) => string;
   previous: string;
   next: string;
@@ -28,6 +29,7 @@ const copy: Record<Locale, {
     searchLabel: "Ürün ara",
     searchPlaceholder: "Ürün adı veya açıklama",
     searchButton: "Ara",
+    localeFallbackNotice: "Bu ürün seçtiğiniz dilde kullanılamıyor. Bu nedenle o dildeki ürün kataloğunu gösteriyoruz.",
     results: (count) => `${count} ürün`,
     previous: "Önceki",
     next: "Sonraki",
@@ -41,6 +43,7 @@ const copy: Record<Locale, {
     searchLabel: "Search products",
     searchPlaceholder: "Product name or description",
     searchButton: "Search",
+    localeFallbackNotice: "This product is not available in the selected language, so we are showing the localized product catalog instead.",
     results: (count) => `${count} products`,
     previous: "Previous",
     next: "Next",
@@ -54,6 +57,7 @@ const copy: Record<Locale, {
     searchLabel: "Produkte suchen",
     searchPlaceholder: "Produktname oder Beschreibung",
     searchButton: "Suchen",
+    localeFallbackNotice: "Dieses Produkt ist in der ausgewählten Sprache nicht verfügbar. Deshalb zeigen wir stattdessen den lokalisierten Produktkatalog.",
     results: (count) => `${count} Produkte`,
     previous: "Zurück",
     next: "Weiter",
@@ -90,11 +94,11 @@ export default async function ProductsPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; notice?: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const { q = "", page: pageParam = "1" } = await searchParams;
+  const { q = "", page: pageParam = "1", notice } = await searchParams;
   const requestedPage = /^\d+$/.test(pageParam) ? Number(pageParam) : 1;
   const content = copy[locale];
   const result = await listStorefrontProductPage(locale, { query: q, page: requestedPage });
@@ -111,6 +115,10 @@ export default async function ProductsPage({
 
       <section className="section">
         <div className="container catalog-layout">
+          {notice === "product-unavailable" ? (
+            <p className="catalog-notice" role="status">{content.localeFallbackNotice}</p>
+          ) : null}
+
           <form className="catalog-toolbar" method="get" action={`/${locale}/products`}>
             <label htmlFor="catalog-search" className="sr-only">{content.searchLabel}</label>
             <input

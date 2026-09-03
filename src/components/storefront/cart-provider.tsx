@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { Locale } from "@/i18n/config";
 
 const STORAGE_KEY = "ecommerce-platform:cart:v1";
 
@@ -14,6 +15,8 @@ export type CartLine = {
   currency: string;
   available: number;
 };
+
+type StoredLine = Pick<CartLine, "variantId" | "quantity">;
 
 type CartContextValue = {
   lines: CartLine[];
@@ -29,7 +32,24 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function sanitizeStoredLines(value: unknown): CartLine[] {
+function sanitizeStoredLines(value: unknown): StoredLine[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object") return [];
+    const line = candidate as Partial<StoredLine>;
+    if (
+      typeof line.variantId !== "string" ||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(line.variantId) ||
+      !Number.isSafeInteger(line.quantity) ||
+      Number(line.quantity) < 1
+    ) {
+      return [];
+    }
+    return [{ variantId: line.variantId, quantity: Number(line.quantity) }];
+  });
+}
+
+function sanitizeResolvedLines(value: unknown): CartLine[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((candidate) => {
     if (!candidate || typeof candidate !== "object") return [];
@@ -42,11 +62,14 @@ function sanitizeStoredLines(value: unknown): CartLine[] {
       typeof line.currency !== "string" ||
       !Number.isFinite(line.unitPrice) ||
       !Number.isSafeInteger(line.available) ||
-      (line.available ?? 0) <= 0 ||
-      !Number.isSafeInteger(line.quantity)
+      Number(line.available) <= 0 ||
+      !Number.isSafeInteger(line.quantity) ||
+      Number(line.quantity) < 1
     ) {
       return [];
     }
+
+    const available = Number(line.available);
     return [{
       variantId: line.variantId,
       slug: line.slug,
@@ -54,35 +77,63 @@ function sanitizeStoredLines(value: unknown): CartLine[] {
       sku: line.sku,
       currency: line.currency,
       unitPrice: Number(line.unitPrice),
-      available: Number(line.available),
-      quantity: Math.min(Math.max(1, Number(line.quantity)), Number(line.available)),
+      available,
+      quantity: Math.min(Number(line.quantity), available),
     }];
   });
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({ children, locale }: { children: ReactNode; locale: Locale }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [open, setOpen] = useState(false);
   const hydratedRef = useRef(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    let active = true;
+
+    async function hydrate() {
+      let storedLines: StoredLine[] = [];
       try {
         const stored = window.localStorage.getItem(STORAGE_KEY);
-        setLines(stored ? sanitizeStoredLines(JSON.parse(stored)) : []);
+        storedLines = stored ? sanitizeStoredLines(JSON.parse(stored)) : [];
       } catch {
-        setLines([]);
-      } finally {
-        hydratedRef.current = true;
+        storedLines = [];
       }
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
+
+      if (storedLines.length === 0) {
+        hydratedRef.current = true;
+        if (active) setLines([]);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/cart/resolve", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ locale, lines: storedLines }),
+        });
+        if (!response.ok) throw new Error("Cart hydration failed");
+        const data = await response.json() as { lines?: unknown };
+        const resolved = sanitizeResolvedLines(data.lines);
+        hydratedRef.current = true;
+        if (active) setLines(resolved);
+      } catch {
+        hydratedRef.current = true;
+        if (active) setLines([]);
+      }
+    }
+
+    void hydrate();
+    return () => {
+      active = false;
+    };
+  }, [locale]);
 
   useEffect(() => {
     if (!hydratedRef.current) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+      const persisted = lines.map(({ variantId, quantity }) => ({ variantId, quantity }));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
     } catch {
       // Storage can be unavailable in privacy modes. The in-memory cart remains usable.
     }

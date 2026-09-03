@@ -11,10 +11,8 @@ function localeHref(pathname: string, currentLocale: Locale, targetLocale: Local
 
   const productDetail = pathname.match(/^\/(?:tr|en|de)\/products\/[^/]+\/?$/);
   if (productDetail) {
-    // A product can be translated into only a subset of locales. The header is
-    // layout-level and cannot safely assume translation availability, so it
-    // fails open to the localized catalog instead of emitting a dead product URL.
-    return `/${targetLocale}/products`;
+    const params = new URLSearchParams({ notice: "product-unavailable" });
+    return `/${targetLocale}/products?${params.toString()}`;
   }
 
   const segments = pathname.split("/");
