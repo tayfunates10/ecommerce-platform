@@ -7,11 +7,12 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 - **Verified completion on `main`: 96%**
 - **Remaining: 4%**
 - **Verified phase state:** Phases 1–9 complete; Phase 10 production certification/release remains open.
-- **Current quality-remediation branch:** `fix/ux-audit-remediation`
-- **Active remediation PR:** PR #12 — `Fix: remediate storefront UX audit findings`
-- **Production-release PR:** PR #10 — `Release: production certification and final readiness` (must be synchronized with `main` after remediation and still requires real production evidence).
-- **Latest `main` merge:** PR #11 usage/UI/UX audit merged as `fa00bcff` on top of the verified Phase 9 merge `61fe9ccf`.
-- **Progress rule:** fixes/audits do not increase the phase percentage. The project moves from **96% to 100% only after Phase 10 has real production deployment/readiness evidence, final CI is green and the release PR is merged.**
+- **Current Phase 10 branch:** `release/production-certification-v2`
+- **Active release PR:** PR #13 — `Release: production certification on remediated main`
+- **Superseded release PR:** PR #10 closed without merge after the audit-remediation base changed.
+- **Latest `main` merge:** PR #12 merged as `59ddcc69a9aea801e971b444afca3cb43934f273`.
+- **Latest `main` CI evidence:** CI #155 PASS after the PR #12 merge.
+- **Progress rule:** fixes/audits do not increase the phase percentage. The project moves from **96% to 100% only after Phase 10 has real production deployment/readiness evidence, exact-head CI/review gates are green and the release PR is merged.**
 
 ## Roadmap and weights
 
@@ -26,7 +27,7 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 | 7. Media + Core Web Vitals | 10% | ✅ Complete — PR #7 |
 | 8. Checkout + security + analytics | 10% | ✅ Complete — PR #8 |
 | 9. E2E/a11y/visual regression certification | 7% | ✅ Complete — PR #9, CI #97 |
-| 10. Production certification + release | 4% | 🟡 Active / production evidence blocked |
+| 10. Production certification + release | 4% | 🟡 Active — PR #13 / real production evidence blocked |
 | **Total** | **100%** | **96% verified on `main`** |
 
 ## Verified phase history
@@ -44,26 +45,9 @@ Production-first, multilingual (TR/EN/DE) ecommerce platform focused on technica
 
 PR #11 added the reproducible audit harness and findings report, then merged to `main` as `fa00bcff`. The initial database-backed audit result was **45 passed / 31 failed (76 total)**.
 
-PR #12 remediates those findings without weakening the assertions. Implemented work includes:
+PR #12 remediated those findings without weakening the assertions and merged to `main` as `59ddcc69` after exact-head CI #154 passed. Post-merge CI #155 then revalidated the same production path on `main`.
 
-- reviewed full commerce baseline migration plus the existing checkout/security migration;
-- PostgreSQL 16 CI service, migration deploy from an empty database and Prisma/database **zero-drift** enforcement;
-- lockfile-enforced `npm ci` and a tracked-file clean-production-build gate;
-- audit fixtures that use the committed migration path and real DB-backed catalog data;
-- correct `src/proxy.ts` locale routing, localized catch-all 404 behavior and navigable not-found UX;
-- persistent cart state, bounded quantities, explicit item removal and server-side stock/price revalidation;
-- cart → localized checkout → existing commerce orchestrator integration, with production payment remaining fail-closed without a configured real gateway;
-- locale-switch dead-end protection for partially translated products;
-- accessible drawer inert/focus behavior, named media links, distinguishable landmarks and keyboard skip navigation;
-- catalog search, result count, pagination, above-the-fold image priority and specific low-stock messaging;
-- product breadcrumbs plus `BreadcrumbList` structured data;
-- responsive touch targets, 200% reflow support and narrow-phone sticky-header compaction;
-- Playwright `toHaveScreenshot()` pixel-diff baselines for TR/EN/DE desktop + mobile instead of brittle byte-level image hashes;
-- CI restored to **`contents: read`** after the one-time baseline bootstrap.
-
-### Latest remediation evidence
-
-Exact remediation HEAD `4d9b7a8aa473a502b3eb17b00f3d2cade23a7628` passed **CI #153** before this README evidence commit:
+Verified remediation evidence on `main`:
 
 - Prisma generate/validate: ✅
 - committed migrations on empty PostgreSQL: ✅
@@ -77,18 +61,67 @@ Exact remediation HEAD `4d9b7a8aa473a502b3eb17b00f3d2cade23a7628` passed **CI #1
 - performance budgets: ✅
 - browser E2E/accessibility/visual regression: **20/20 PASS**
 - database-backed usage/UI/UX audit: **76/76 PASS**
-- review blockers: **0 open**
-
-This README commit requires one fresh exact-head CI run before PR #12 can be merged. PR #12 must not be merged on older CI evidence.
+- review blockers before merge: **0 open**
 
 ## Phase 10 — Production certification + release (remaining 4%)
 
-PR #10 contains the release contract, migration/release checklist, final security/performance/SEO/a11y/checkout verification, immutable-SHA deployment sequence, rollback requirements and fail-closed production evidence verifier.
+PR #13 was rebuilt directly on the remediated `main` rather than merging the stale pre-remediation PR #10 branch.
 
-The remaining 4% cannot be marked complete using synthetic/example targets. Required real evidence includes a real HTTPS production hostname/deployment target, exact deployed release SHA, production migration result, canonical/hreflang/robots/sitemap/security-header smoke checks, checkout/payment readiness, performance/accessibility smoke evidence and a verified rollback target with database compatibility.
+Repository-controlled Phase 10 implementation in PR #13:
 
-After PR #12 merges, Phase 10 must first be synchronized with the new `main`, revalidated, and only then completed/merged when those real production requirements are satisfied.
+- canonical production environment and release contract in `docs/production-release.md`;
+- `.env.example` aligned with the required build-time `RELEASE_SHA` contract and explicitly marks localhost/example values as non-production placeholders;
+- immutable-SHA deployment sequence and rollback/database compatibility requirements;
+- fail-closed `npm run release:verify:production` public production verifier;
+- mandatory HTTPS, exact 40-character release SHA and origin-only validation;
+- build-time `RELEASE_SHA` identity exposed as `X-Release-SHA` on public responses;
+- verifier requires `X-Release-SHA` to equal the exact candidate SHA on every checked response;
+- localhost, reserved `.local`/`.test`/`.invalid`, example domains, IP literals and trailing-dot reserved-host variants rejected as production evidence;
+- each public request has a bounded timeout;
+- every redirect hop must remain HTTPS on the exact certified production origin and is capped at five redirects;
+- exact TR/EN/DE + `x-default` canonical/hreflang target validation;
+- mandatory production security-header checks with `X-Powered-By` rejection;
+- robots evidence requires an active exact `Sitemap:` directive rather than a substring/comment match;
+- sitemap evidence parses `<loc>` entries and requires exact `/tr`, `/en` and `/de` storefront roots;
+- regression tests cover invalid/synthetic targets, trailing-dot host bypasses, release-identity mismatch, cross-origin redirects, robots false positives and sitemap-prefix false positives without external network dependence.
+
+### Latest repository-controlled Phase 10 evidence
+
+Implementation HEAD `b3c5ba555750e9ceb365abfa4c4d45d54b014e64` passed **CI #166**:
+
+- Prisma generate/validate: ✅
+- committed migrations on empty PostgreSQL: ✅
+- Prisma/database zero drift: ✅
+- audit fixture seed: ✅
+- lint: ✅
+- typecheck: ✅
+- unit/domain/release regression tests: **38/38 PASS**
+- production build: ✅
+- tracked-file clean-build gate: ✅
+- performance budgets: ✅
+- browser E2E/accessibility/visual regression: **20/20 PASS**
+- database-backed usage/UI/UX audit: **76/76 PASS**
+- PR #13 review threads after fixes: **0 open**
+
+README evidence HEAD `144fb5efb7f7db4c7e8eb1cd674e0b00471acaad` then passed **CI #167** with the same complete pipeline. After CI #167, `.env.example` was aligned with the `RELEASE_SHA` build contract. This current documentation HEAD must pass one final fresh exact-head CI run before repository-controlled Phase 10 evidence is considered final. That CI success still does **not** substitute for real production deployment evidence.
+
+### Required Phase 10 evidence
+
+Repository CI success alone is not enough. Before Phase 10 can move the project to 100%, the exact release SHA must have real evidence for:
+
+- [ ] real HTTPS production hostname and deployed immutable artifact;
+- [ ] production artifact returns `X-Release-SHA` equal to the exact candidate SHA;
+- [ ] production `prisma migrate deploy` result;
+- [ ] rollback application SHA + database compatibility decision or tested remediation plan;
+- [ ] public production verifier PASS against the deployed hostname;
+- [ ] production checkout/payment smoke without duplicate order/payment creation;
+- [ ] production accessibility/performance smoke;
+- [ ] final SHA-bound deployment evidence record;
+- [ ] final exact-head PR #13 CI green and review blockers zero;
+- [ ] PR #13 merged to `main`.
+
+The project therefore remains intentionally **96% verified / 4% remaining** until these real production requirements exist. Synthetic/example results are never accepted as production PASS evidence.
 
 ## Progress reporting rule
 
-Every stage records completed work, CI/test evidence, total verified percentage, remaining percentage and the next required step. A PR is never merged while its exact-head mandatory CI is pending or red.
+Every stage records completed work, CI/test evidence, total verified percentage, remaining percentage and the next required step. A PR is never merged while its exact-head mandatory CI is pending/red or while mandatory production evidence is missing.

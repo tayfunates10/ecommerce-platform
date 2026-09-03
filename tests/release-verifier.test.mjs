@@ -1,0 +1,167 @@
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { test } from "node:test";
+import {
+  assertReleaseIdentity,
+  assertRobotsSitemap,
+  assertSitemapRoots,
+  fetchChecked,
+} from "../scripts/verify-production.mjs";
+
+const script = new URL("../scripts/verify-production.mjs", import.meta.url);
+const NON_RESERVED_HOST = "https://shop.acme-commerce.com";
+
+function run(env = {}, args = []) {
+  return spawnSync(process.execPath, [script.pathname, ...args], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PRODUCTION_URL: "",
+      RELEASE_SHA: "",
+      RELEASE_EVIDENCE_OUTPUT: "",
+      ...env,
+    },
+    encoding: "utf8",
+  });
+}
+
+test("production verifier requires an explicit target", () => {
+  const result = run();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /PRODUCTION_URL is required/);
+});
+
+test("production verifier rejects non-HTTPS targets before network access", () => {
+  const result = run({ RELEASE_SHA: "a".repeat(40) }, ["http://shop.acme-commerce.com"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /must use HTTPS/);
+});
+
+test("production verifier rejects example domains as synthetic evidence", () => {
+  const result = run({ RELEASE_SHA: "b".repeat(40) }, ["https://example.com"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /real public production hostname/);
+});
+
+test("production verifier rejects reserved test domains as synthetic evidence", () => {
+  const result = run({ RELEASE_SHA: "c".repeat(40) }, ["https://shop.production.test"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /real public production hostname/);
+});
+
+test("production verifier rejects fully-qualified reserved hostnames with a trailing dot", () => {
+  const result = run({ RELEASE_SHA: "d".repeat(40) }, ["https://shop.production.test."]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /real public production hostname/);
+});
+
+test("production verifier rejects IP literals", () => {
+  const result = run({ RELEASE_SHA: "e".repeat(40) }, ["https://203.0.113.10"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /real public production hostname/);
+});
+
+test("production verifier rejects credentials in the production origin", () => {
+  const result = run({ RELEASE_SHA: "f".repeat(40) }, ["https://user:pass@shop.acme-commerce.com"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /must not contain credentials/);
+});
+
+test("production verifier rejects paths, queries and fragments", () => {
+  const result = run({ RELEASE_SHA: "1".repeat(40) }, [`${NON_RESERVED_HOST}/tr?probe=1`]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /origin only/);
+});
+
+test("production verifier requires an exact 40-character release SHA before network access", () => {
+  const result = run({ PRODUCTION_URL: NON_RESERVED_HOST, RELEASE_SHA: "deadbeef" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /exact 40-character Git commit SHA/);
+});
+
+test("production verifier binds evidence to the deployed X-Release-SHA header", () => {
+  const sha = "1".repeat(40);
+  const matching = new Response("", { headers: { "x-release-sha": sha } });
+  assert.doesNotThrow(() => assertReleaseIdentity(matching, "storefront", sha));
+
+  const missing = new Response("");
+  assert.throws(
+    () => assertReleaseIdentity(missing, "storefront", sha),
+    /release identity mismatch: expected .* received missing/,
+  );
+
+  const mismatched = new Response("", { headers: { "x-release-sha": "2".repeat(40) } });
+  assert.throws(
+    () => assertReleaseIdentity(mismatched, "storefront", sha),
+    /release identity mismatch/,
+  );
+});
+
+test("production verifier refuses a cross-origin redirect before following it", async () => {
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return new Response(null, {
+      status: 302,
+      headers: { location: "https://different-origin.example/tr" },
+    });
+  };
+
+  await assert.rejects(
+    fetchChecked(`${NON_RESERVED_HOST}/tr`, "tr storefront", NON_RESERVED_HOST, fetchImpl),
+    /redirected away from the certified production origin/,
+  );
+  assert.equal(calls, 1);
+});
+
+test("production verifier permits bounded same-origin redirects", async () => {
+  let calls = 0;
+  const fetchImpl = async (url) => {
+    calls += 1;
+    if (new URL(url).pathname === "/tr") {
+      return new Response(null, { status: 307, headers: { location: "/tr/" } });
+    }
+    return new Response("ok", { status: 200 });
+  };
+
+  const response = await fetchChecked(
+    `${NON_RESERVED_HOST}/tr`,
+    "tr storefront",
+    NON_RESERVED_HOST,
+    fetchImpl,
+  );
+  assert.equal(response.status, 200);
+  assert.equal(calls, 2);
+});
+
+test("robots evidence requires an active exact Sitemap directive", () => {
+  const expected = `${NON_RESERVED_HOST}/sitemap.xml`;
+  assert.doesNotThrow(() => assertRobotsSitemap(`User-agent: *\nSitemap: ${expected}\n`, expected));
+  assert.throws(
+    () => assertRobotsSitemap(`# old sitemap: ${expected}\nUser-agent: *\nAllow: /\n`, expected),
+    /active Sitemap directive/,
+  );
+  assert.throws(
+    () => assertRobotsSitemap(`User-agent: *\nSitemap: ${expected}?old=1\n`, expected),
+    /active Sitemap directive/,
+  );
+});
+
+test("sitemap evidence requires exact localized storefront root locations", () => {
+  const exact = `<?xml version="1.0"?><urlset>
+    <url><loc>${NON_RESERVED_HOST}/tr</loc></url>
+    <url><loc>${NON_RESERVED_HOST}/en/</loc></url>
+    <url><loc>${NON_RESERVED_HOST}/de</loc></url>
+  </urlset>`;
+  assert.doesNotThrow(() => assertSitemapRoots(exact, NON_RESERVED_HOST));
+
+  const onlyDeeperUrls = `<?xml version="1.0"?><urlset>
+    <url><loc>${NON_RESERVED_HOST}/tr/products</loc></url>
+    <url><loc>${NON_RESERVED_HOST}/en/products</loc></url>
+    <url><loc>${NON_RESERVED_HOST}/de/products</loc></url>
+  </urlset>`;
+  assert.throws(
+    () => assertSitemapRoots(onlyDeeperUrls, NON_RESERVED_HOST),
+    /missing the exact tr storefront root URL/,
+  );
+});
