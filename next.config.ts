@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 import { SECURITY_HEADERS } from "./src/lib/security";
 
+const releaseSha = process.env.RELEASE_SHA ?? process.env.GITHUB_SHA ?? "";
+const releaseIdentityHeaders = /^[0-9a-f]{40}$/i.test(releaseSha)
+  ? [{ key: "X-Release-SHA", value: releaseSha.toLowerCase() }]
+  : [];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -15,7 +20,10 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: SECURITY_HEADERS.map(({ key, value }) => ({ key, value })),
+        headers: [
+          ...SECURITY_HEADERS.map(({ key, value }) => ({ key, value })),
+          ...releaseIdentityHeaders,
+        ],
       },
     ];
   },
