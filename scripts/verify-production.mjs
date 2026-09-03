@@ -24,8 +24,15 @@ function isIpLiteral(hostname) {
   return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":");
 }
 
+function canonicalHostname(hostname) {
+  return hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/\.+$/, "");
+}
+
 function isReservedHostname(hostname) {
-  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  const host = canonicalHostname(hostname);
   if (isIpLiteral(host)) return true;
 
   if (
@@ -82,7 +89,7 @@ async function fetchOnce(url, label, fetchImpl = fetch) {
   try {
     return await fetchImpl(url, {
       redirect: "manual",
-      headers: { "user-agent": "ecommerce-platform-production-certifier/1.3" },
+      headers: { "user-agent": "ecommerce-platform-production-certifier/1.4" },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
@@ -197,6 +204,34 @@ export function assertReleaseIdentity(response, label, releaseSha) {
   }
 }
 
+export function assertRobotsSitemap(robots, expectedSitemapUrl) {
+  const advertised = robots
+    .split(/\r?\n/)
+    .map((line) => line.replace(/#.*$/, "").trim())
+    .filter(Boolean)
+    .map((line) => line.match(/^sitemap\s*:\s*(\S+)\s*$/i)?.[1] ?? null)
+    .filter(Boolean);
+
+  if (!advertised.includes(expectedSitemapUrl)) {
+    fail("robots.txt does not advertise the production sitemap URL with an active Sitemap directive.");
+  }
+}
+
+export function assertSitemapRoots(sitemap, origin) {
+  const locations = new Set(
+    [...sitemap.matchAll(/<loc\b[^>]*>\s*([^<]+?)\s*<\/loc>/gi)]
+      .map((match) => normalizeHref(match[1], origin))
+      .filter(Boolean),
+  );
+
+  for (const locale of LOCALES) {
+    const expected = `${origin}/${locale}`;
+    if (!locations.has(expected)) {
+      fail(`sitemap.xml is missing the exact ${locale} storefront root URL.`);
+    }
+  }
+}
+
 export async function runProductionVerification({
   productionUrl,
   releaseSha: releaseShaRaw,
@@ -223,9 +258,7 @@ export async function runProductionVerification({
   assertSecurityHeaders(robotsResponse, "robots.txt");
   assertReleaseIdentity(robotsResponse, "robots.txt", releaseSha);
   const robots = await robotsResponse.text();
-  if (!robots.includes(`${origin}/sitemap.xml`)) {
-    fail("robots.txt does not advertise the production sitemap URL.");
-  }
+  assertRobotsSitemap(robots, `${origin}/sitemap.xml`);
   checks.push({ check: "robots", status: "PASS", url: robotsUrl });
 
   const sitemapUrl = `${origin}/sitemap.xml`;
@@ -233,11 +266,7 @@ export async function runProductionVerification({
   assertSecurityHeaders(sitemapResponse, "sitemap.xml");
   assertReleaseIdentity(sitemapResponse, "sitemap.xml", releaseSha);
   const sitemap = await sitemapResponse.text();
-  for (const locale of LOCALES) {
-    if (!sitemap.includes(`${origin}/${locale}`)) {
-      fail(`sitemap.xml is missing the ${locale} storefront URL.`);
-    }
-  }
+  assertSitemapRoots(sitemap, origin);
   checks.push({ check: "sitemap", status: "PASS", url: sitemapUrl });
 
   const evidence = {
