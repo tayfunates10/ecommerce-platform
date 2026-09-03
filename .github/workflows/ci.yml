@@ -12,7 +12,21 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecommerce
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ecommerce"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecommerce?schema=public
       NEXT_PUBLIC_SITE_URL: https://ci.example.invalid
@@ -24,23 +38,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Capture generated lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-package-lock
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 1
+        run: npm ci --no-audit --no-fund
 
       - name: Generate Prisma client
         run: npm run db:generate
 
       - name: Validate Prisma schema
         run: npm run db:validate
+
+      - name: Generate commerce baseline candidate
+        run: npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script --output migration-baseline-candidate.sql
+
+      - name: Upload commerce baseline candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-baseline-candidate
+          path: migration-baseline-candidate.sql
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Require committed baseline before continuing
+        run: |
+          echo "::error::Migration baseline candidate generated. Commit the reviewed SQL before enabling the remaining CI gates."
+          exit 1
 
       - name: Lint
         run: npm run lint
