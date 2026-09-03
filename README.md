@@ -70,6 +70,7 @@ PR #13 was rebuilt directly on the remediated `main` rather than merging the sta
 Repository-controlled Phase 10 implementation in PR #13:
 
 - canonical production environment and release contract in `docs/production-release.md`;
+- `.env.example` aligned with the required build-time `RELEASE_SHA` contract and explicitly marks localhost/example values as non-production placeholders;
 - immutable-SHA deployment sequence and rollback/database compatibility requirements;
 - fail-closed `npm run release:verify:production` public production verifier;
 - mandatory HTTPS, exact 40-character release SHA and origin-only validation;
@@ -86,7 +87,7 @@ Repository-controlled Phase 10 implementation in PR #13:
 
 ### Latest repository-controlled Phase 10 evidence
 
-Implementation HEAD `b3c5ba555750e9ceb365abfa4c4d45d54b014e64` passed **CI #166** before this README evidence commit:
+Implementation HEAD `b3c5ba555750e9ceb365abfa4c4d45d54b014e64` passed **CI #166**:
 
 - Prisma generate/validate: ✅
 - committed migrations on empty PostgreSQL: ✅
@@ -102,7 +103,7 @@ Implementation HEAD `b3c5ba555750e9ceb365abfa4c4d45d54b014e64` passed **CI #166*
 - database-backed usage/UI/UX audit: **76/76 PASS**
 - PR #13 review threads after fixes: **0 open**
 
-This README evidence commit must itself pass one fresh exact-head CI run before repository-controlled Phase 10 evidence is considered final. That CI success still does **not** substitute for real production deployment evidence.
+README evidence HEAD `144fb5efb7f7db4c7e8eb1cd674e0b00471acaad` then passed **CI #167** with the same complete pipeline. After CI #167, `.env.example` was aligned with the `RELEASE_SHA` build contract. This current documentation HEAD must pass one final fresh exact-head CI run before repository-controlled Phase 10 evidence is considered final. That CI success still does **not** substitute for real production deployment evidence.
 
 ### Required Phase 10 evidence
 
