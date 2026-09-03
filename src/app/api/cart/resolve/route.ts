@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ lines: [] }, { status: 400 });
   }
 
+  const locale = body.locale;
   const requested = (body.lines as StoredLine[]).flatMap((line) => {
     if (typeof line?.variantId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(line.variantId)) return [];
     const quantity = Number(line.quantity);
@@ -43,11 +44,11 @@ export async function POST(request: Request) {
     include: {
       product: {
         include: {
-          translations: { where: { locale: localeDb[body.locale] }, take: 1 },
+          translations: { where: { locale: localeDb[locale] }, take: 1 },
         },
       },
       inventory: true,
-      prices: { where: { currency: localeCurrency[body.locale] } },
+      prices: { where: { currency: localeCurrency[locale] } },
     },
   });
 
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
       sku: variant.sku,
       quantity: Math.min(requestedLine.quantity, available),
       unitPrice: Number(price.amount.toString()),
-      currency: localeCurrency[body.locale],
+      currency: localeCurrency[locale],
       available,
     }];
   });
