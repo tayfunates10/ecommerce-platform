@@ -34,10 +34,7 @@ export async function generateMetadata({
 
   return {
     metadataBase: new URL(siteUrl),
-    title: {
-      default: siteName,
-      template: `%s | ${siteName}`,
-    },
+    title: { default: siteName, template: `%s | ${siteName}` },
     description: descriptions[locale],
     alternates: {
       canonical: absoluteUrl(localizedPath(locale)),
@@ -72,9 +69,11 @@ export default async function LocaleLayout({
           <a className="skip-link" href="#main-content">
             {locale === "tr" ? "İçeriğe geç" : locale === "de" ? "Zum Inhalt" : "Skip to content"}
           </a>
-          <SiteHeader locale={locale} />
-          {children}
-          <SiteFooter locale={locale} />
+          <div data-storefront-shell>
+            <SiteHeader locale={locale} />
+            {children}
+            <SiteFooter locale={locale} />
+          </div>
           <CartDrawer locale={locale} />
         </CartProvider>
         {webVitalsEndpoint ? <WebVitalsReporter endpoint={webVitalsEndpoint} /> : null}
