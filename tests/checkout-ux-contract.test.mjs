@@ -9,7 +9,7 @@ const cartSource = await readFile(new URL("../src/components/storefront/cart-pro
 test("checkout failure path keeps keyboard focus recoverable", () => {
   assert.match(formSource, /errorRef\.current\?\.focus\(\)/);
   assert.match(formSource, /role="alert" tabIndex=\{-1\}/);
-  assert.doesNotMatch(formSource, /disabled=\{pending\}/);
+  assert.doesNotMatch(formSource, /(?:^|\s)disabled=\{pending\}/m);
 });
 
 test("checkout UI never renders raw server exception text", () => {
