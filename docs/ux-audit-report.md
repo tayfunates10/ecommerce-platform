@@ -1,5 +1,10 @@
 # Usage / UI / UX audit report
 
+> **Status: all findings in this report have been remediated on `main`.**
+> Verified in round 2 against `59ddcc6` — see `ux-audit-round-2.md`, which
+> records the verification of every finding below and six new findings in the
+> checkout surface the remediation introduced.
+
 **Scope:** the storefront as an actual shopper, screen-reader user and keyboard
 user experiences it — site entry, catalog browsing, product detail, cart,
 localization, responsive layout and accessibility.
