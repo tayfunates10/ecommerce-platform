@@ -73,19 +73,22 @@ Repository-controlled Phase 10 implementation in PR #13:
 - immutable-SHA deployment sequence and rollback/database compatibility requirements;
 - fail-closed `npm run release:verify:production` public production verifier;
 - mandatory HTTPS, exact 40-character release SHA and origin-only validation;
+- build-time `RELEASE_SHA` identity exposed as `X-Release-SHA` on public responses;
+- verifier requires `X-Release-SHA` to equal the exact candidate SHA on every checked response;
 - localhost, reserved `.local`/`.test`/`.invalid`, example domains and IP literals rejected as production evidence;
-- bounded public-request timeout;
-- redirects must remain on the exact certified production origin;
+- each public request has a bounded timeout;
+- every redirect hop must remain HTTPS on the exact certified production origin and is capped at five redirects;
 - exact TR/EN/DE + `x-default` canonical/hreflang target validation;
 - mandatory production security-header checks with `X-Powered-By` rejection;
 - robots/sitemap localized storefront verification;
-- regression tests that reject invalid/synthetic production targets before network access.
+- regression tests for invalid/synthetic targets, release-identity mismatch and cross-origin redirect rejection without external network dependence.
 
 ### Required Phase 10 evidence
 
 Repository CI success alone is not enough. Before Phase 10 can move the project to 100%, the exact release SHA must have real evidence for:
 
 - [ ] real HTTPS production hostname and deployed immutable artifact;
+- [ ] production artifact returns `X-Release-SHA` equal to the exact candidate SHA;
 - [ ] production `prisma migrate deploy` result;
 - [ ] rollback application SHA + database compatibility decision or tested remediation plan;
 - [ ] public production verifier PASS against the deployed hostname;
