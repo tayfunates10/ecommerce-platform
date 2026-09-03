@@ -15,9 +15,9 @@ function formatMoney(amount: number, currency: string, locale: Locale) {
 }
 
 const labels = {
-  tr: { back: "Ürünlere dön", stock: "Stok", available: "adet mevcut", unavailable: "Stokta yok", sku: "SKU" },
-  en: { back: "Back to products", stock: "Stock", available: "available", unavailable: "Out of stock", sku: "SKU" },
-  de: { back: "Zurück zu Produkten", stock: "Bestand", available: "verfügbar", unavailable: "Nicht auf Lager", sku: "SKU" },
+  tr: { home: "Ana sayfa", products: "Ürünler", back: "Ürünlere dön", stock: "Stok", available: "adet mevcut", unavailable: "Stokta yok", sku: "SKU", breadcrumb: "İçerik zinciri" },
+  en: { home: "Home", products: "Products", back: "Back to products", stock: "Stock", available: "available", unavailable: "Out of stock", sku: "SKU", breadcrumb: "Breadcrumb" },
+  de: { home: "Startseite", products: "Produkte", back: "Zurück zu Produkten", stock: "Bestand", available: "verfügbar", unavailable: "Nicht auf Lager", sku: "SKU", breadcrumb: "Breadcrumb" },
 } satisfies Record<Locale, Record<string, string>>;
 
 export const dynamic = "force-dynamic";
@@ -67,6 +67,8 @@ export default async function ProductPage({
   if (!product) notFound();
   const variant = product.variant;
   const copy = labels[locale];
+  const homeUrl = absoluteUrl(localizedPath(locale));
+  const catalogUrl = absoluteUrl(localizedPath(locale, "/products"));
   const productUrl = absoluteUrl(localizedPath(locale, `/products/${product.slug}`));
   const commonProductData = {
     brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
@@ -88,7 +90,7 @@ export default async function ProductPage({
     },
   }));
 
-  const structuredData = product.variants.length > 1
+  const productStructuredData = product.variants.length > 1
     ? {
         "@context": "https://schema.org",
         "@type": "ProductGroup",
@@ -108,14 +110,35 @@ export default async function ProductPage({
         offers: variantNodes[0]?.offers,
       };
 
+  const breadcrumbStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: copy.home, item: homeUrl },
+      { "@type": "ListItem", position: 2, name: copy.products, item: catalogUrl },
+      { "@type": "ListItem", position: 3, name: product.name, item: productUrl },
+    ],
+  };
+
   return (
     <main id="main-content" tabIndex={-1}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData).replace(/</g, "\\u003c") }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbStructuredData).replace(/</g, "\\u003c") }}
       />
       <section className="section product-detail">
         <div className="container">
+          <nav className="breadcrumb" aria-label={copy.breadcrumb}>
+            <ol>
+              <li><Link href={`/${locale}`}>{copy.home}</Link></li>
+              <li><Link href={`/${locale}/products`}>{copy.products}</Link></li>
+              <li aria-current="page">{product.name}</li>
+            </ol>
+          </nav>
           <Link className="text-link" href={`/${locale}/products`}>{copy.back}</Link>
           <div className="product-detail__grid">
             <div className="product-detail__media">
@@ -156,6 +179,7 @@ export default async function ProductPage({
                       sku: variant.sku,
                       unitPrice: variant.price,
                       currency: variant.currency,
+                      available: variant.available,
                     }}
                   />
                 </div>
