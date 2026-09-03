@@ -2,6 +2,11 @@ node_modules/
 .next/
 out/
 coverage/
+*.tsbuildinfo
+playwright-report-audit/
+playwright-report/
+test-results/
+src/generated/
 .env
 .env.*
 !.env.example
@@ -9,3 +14,10 @@ coverage/
 .DS_Store
 .vscode/
 .idea/
+
+# Audit fixture media, copied into place by tests/audit/fixtures/setup.sh.
+# The tracked originals live in tests/audit/fixtures/media/.
+/public/media/aurora.png
+/public/media/nimbus.png
+/public/media/solis.png
+/public/media/vertex.png
