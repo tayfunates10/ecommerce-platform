@@ -17,6 +17,7 @@
     "test:e2e:report": "playwright show-report",
     "test:ux-audit": "playwright test --config=tests/audit/playwright.audit.config.mjs",
     "perf:budget": "node --experimental-strip-types scripts/check-performance-budget.mjs",
+    "release:verify:production": "node scripts/verify-production.mjs",
     "check": "npm run db:generate && npm run db:validate && npm run lint && npm run typecheck && npm run test && npm run build && npm run perf:budget",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
