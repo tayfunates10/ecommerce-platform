@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import "../globals.css";
 import "../storefront.css";
+import "../remediation.css";
 import { WebVitalsReporter } from "@/components/performance/web-vitals-reporter";
 import { CartDrawer } from "@/components/storefront/cart-ui";
 import { CartProvider } from "@/components/storefront/cart-provider";
@@ -66,10 +67,10 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body>
         <CartProvider>
-          <a className="skip-link" href="#main-content">
-            {locale === "tr" ? "İçeriğe geç" : locale === "de" ? "Zum Inhalt" : "Skip to content"}
-          </a>
           <div data-storefront-shell>
+            <a className="skip-link" href="#main-content">
+              {locale === "tr" ? "İçeriğe geç" : locale === "de" ? "Zum Inhalt" : "Skip to content"}
+            </a>
             <SiteHeader locale={locale} />
             {children}
             <SiteFooter locale={locale} />
