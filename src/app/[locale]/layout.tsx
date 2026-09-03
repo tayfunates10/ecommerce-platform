@@ -66,7 +66,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body>
-        <CartProvider>
+        <CartProvider locale={locale}>
           <div data-storefront-shell>
             <a className="skip-link" href="#main-content">
               {locale === "tr" ? "İçeriğe geç" : locale === "de" ? "Zum Inhalt" : "Skip to content"}
