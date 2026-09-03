@@ -88,6 +88,8 @@ jobs:
           if [ -n "$(git status --porcelain -- tests/e2e/snapshots)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git fetch origin "${GITHUB_HEAD_REF}"
+            git switch -C "${GITHUB_HEAD_REF}" "origin/${GITHUB_HEAD_REF}"
             git add tests/e2e/snapshots
             git commit -m "test(visual): commit Playwright baselines"
             git push origin HEAD:${GITHUB_HEAD_REF}
