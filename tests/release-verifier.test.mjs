@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
+import {
+  assertReleaseIdentity,
+  fetchChecked,
+} from "../scripts/verify-production.mjs";
 
 const script = new URL("../scripts/verify-production.mjs", import.meta.url);
 const NON_RESERVED_HOST = "https://shop.acme-commerce.com";
@@ -65,4 +69,59 @@ test("production verifier requires an exact 40-character release SHA before netw
   const result = run({ PRODUCTION_URL: NON_RESERVED_HOST, RELEASE_SHA: "deadbeef" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /exact 40-character Git commit SHA/);
+});
+
+test("production verifier binds evidence to the deployed X-Release-SHA header", () => {
+  const sha = "1".repeat(40);
+  const matching = new Response("", { headers: { "x-release-sha": sha } });
+  assert.doesNotThrow(() => assertReleaseIdentity(matching, "storefront", sha));
+
+  const missing = new Response("");
+  assert.throws(
+    () => assertReleaseIdentity(missing, "storefront", sha),
+    /release identity mismatch: expected .* received missing/,
+  );
+
+  const mismatched = new Response("", { headers: { "x-release-sha": "2".repeat(40) } });
+  assert.throws(
+    () => assertReleaseIdentity(mismatched, "storefront", sha),
+    /release identity mismatch/,
+  );
+});
+
+test("production verifier refuses a cross-origin redirect before following it", async () => {
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return new Response(null, {
+      status: 302,
+      headers: { location: "https://different-origin.example/tr" },
+    });
+  };
+
+  await assert.rejects(
+    fetchChecked(`${NON_RESERVED_HOST}/tr`, "tr storefront", NON_RESERVED_HOST, fetchImpl),
+    /redirected away from the certified production origin/,
+  );
+  assert.equal(calls, 1);
+});
+
+test("production verifier permits bounded same-origin redirects", async () => {
+  let calls = 0;
+  const fetchImpl = async (url) => {
+    calls += 1;
+    if (new URL(url).pathname === "/tr") {
+      return new Response(null, { status: 307, headers: { location: "/tr/" } });
+    }
+    return new Response("ok", { status: 200 });
+  };
+
+  const response = await fetchChecked(
+    `${NON_RESERVED_HOST}/tr`,
+    "tr storefront",
+    NON_RESERVED_HOST,
+    fetchImpl,
+  );
+  assert.equal(response.status, 200);
+  assert.equal(calls, 2);
 });
