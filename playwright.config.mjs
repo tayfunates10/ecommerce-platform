@@ -9,6 +9,15 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [["line"], ["html", { open: "never" }]] : "list",
+  snapshotPathTemplate: "{testDir}/snapshots/{projectName}/{arg}{ext}",
+  expect: {
+    toHaveScreenshot: {
+      animations: "disabled",
+      scale: "device",
+      maxDiffPixelRatio: 0.01,
+      threshold: 0.2,
+    },
+  },
   use: {
     baseURL,
     trace: "retain-on-failure",

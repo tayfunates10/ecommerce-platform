@@ -9,10 +9,32 @@ function formatMoney(amount: number, currency: string, locale: Locale) {
   return new Intl.NumberFormat(localeTag, { style: "currency", currency }).format(amount);
 }
 
-export function ProductCard({ product, locale }: { product: StorefrontProduct; locale: Locale }) {
+function stockLabel(available: number, locale: Locale) {
+  if (available <= 0) return locale === "tr" ? "Tükendi" : locale === "de" ? "Ausverkauft" : "Sold out";
+  if (available <= 5) {
+    return locale === "tr"
+      ? `Son ${available} adet`
+      : locale === "de"
+        ? `Nur noch ${available}`
+        : `Only ${available} left`;
+  }
+  return locale === "tr" ? "Stokta" : locale === "de" ? "Auf Lager" : "In stock";
+}
+
+export function ProductCard({
+  product,
+  locale,
+  priority = false,
+}: {
+  product: StorefrontProduct;
+  locale: Locale;
+  priority?: boolean;
+}) {
+  const href = `/${locale}/products/${product.slug}`;
+
   return (
     <article className="product-card">
-      <Link className="product-card__media" href={`/${locale}/products/${product.slug}`}>
+      <Link className="product-card__media" href={href} aria-label={product.name}>
         {product.image ? (
           <Image
             src={product.image.url}
@@ -21,7 +43,7 @@ export function ProductCard({ product, locale }: { product: StorefrontProduct; l
             height={product.image.height ?? 800}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             quality={performanceBudget.productImageQuality}
-            loading="lazy"
+            {...(priority ? { priority: true } : { loading: "lazy" as const })}
           />
         ) : (
           <div className="product-card__placeholder" aria-hidden="true" />
@@ -29,15 +51,13 @@ export function ProductCard({ product, locale }: { product: StorefrontProduct; l
       </Link>
       <div className="product-card__body">
         {product.brand && <p className="product-card__brand">{product.brand}</p>}
-        <h2><Link href={`/${locale}/products/${product.slug}`}>{product.name}</Link></h2>
+        <h2><Link href={href}>{product.name}</Link></h2>
         {product.shortCopy && <p>{product.shortCopy}</p>}
         {product.variant ? (
           <div className="product-card__price-row">
             <strong>{formatMoney(product.variant.price, product.variant.currency, locale)}</strong>
             <span className={product.variant.available > 0 ? "stock stock--in" : "stock stock--out"}>
-              {product.variant.available > 0
-                ? locale === "tr" ? "Stokta" : locale === "de" ? "Auf Lager" : "In stock"
-                : locale === "tr" ? "Tükendi" : locale === "de" ? "Ausverkauft" : "Sold out"}
+              {stockLabel(product.variant.available, locale)}
             </span>
           </div>
         ) : (

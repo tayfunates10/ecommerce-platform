@@ -3,10 +3,10 @@ import { CartButton } from "@/components/storefront/cart-ui";
 import { LocaleNav } from "@/components/storefront/locale-nav";
 import type { Locale } from "@/i18n/config";
 
-const labels: Record<Locale, { home: string; products: string; languages: string }> = {
-  tr: { home: "Ana sayfa", products: "Ürünler", languages: "Dil seçimi" },
-  en: { home: "Home", products: "Products", languages: "Language selection" },
-  de: { home: "Startseite", products: "Produkte", languages: "Sprachauswahl" },
+const labels: Record<Locale, { home: string; products: string; languages: string; mainNav: string }> = {
+  tr: { home: "Ana sayfa", products: "Ürünler", languages: "Dil seçimi", mainNav: "Ana menü" },
+  en: { home: "Home", products: "Products", languages: "Language selection", mainNav: "Main navigation" },
+  de: { home: "Startseite", products: "Produkte", languages: "Sprachauswahl", mainNav: "Hauptnavigation" },
 };
 
 export function SiteHeader({ locale }: { locale: Locale }) {
@@ -19,7 +19,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           Ecommerce Platform
         </Link>
 
-        <nav className="primary-nav" aria-label={copy.products}>
+        <nav className="primary-nav" aria-label={copy.mainNav}>
           <Link href={`/${locale}`}>{copy.home}</Link>
           <Link href={`/${locale}/products`}>{copy.products}</Link>
         </nav>

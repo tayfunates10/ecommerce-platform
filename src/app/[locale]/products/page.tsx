@@ -1,31 +1,62 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/storefront/product-card";
 import { isLocale, type Locale } from "@/i18n/config";
 import { absoluteUrl, localeAlternates, localizedPath, siteName } from "@/lib/seo";
-import { listStorefrontProducts } from "@/lib/storefront-data";
+import { listStorefrontProductPage } from "@/lib/storefront-data";
 
-const copy: Record<Locale, { eyebrow: string; title: string; body: string; emptyTitle: string; emptyBody: string }> = {
+const copy: Record<Locale, {
+  eyebrow: string;
+  title: string;
+  body: string;
+  emptyTitle: string;
+  emptyBody: string;
+  searchLabel: string;
+  searchPlaceholder: string;
+  searchButton: string;
+  results: (count: number) => string;
+  previous: string;
+  next: string;
+}> = {
   tr: {
     eyebrow: "Katalog",
     title: "Ürünler",
     body: "Güncel stok ve fiyat bilgileriyle satışa açık ürünleri keşfedin.",
-    emptyTitle: "Henüz yayınlanmış ürün yok",
-    emptyBody: "Satışa açılan gerçek ürünler burada otomatik olarak görünecek.",
+    emptyTitle: "Ürün bulunamadı",
+    emptyBody: "Aramanızı değiştirin veya daha sonra tekrar kontrol edin.",
+    searchLabel: "Ürün ara",
+    searchPlaceholder: "Ürün adı veya açıklama",
+    searchButton: "Ara",
+    results: (count) => `${count} ürün`,
+    previous: "Önceki",
+    next: "Sonraki",
   },
   en: {
     eyebrow: "Catalog",
     title: "Products",
     body: "Explore products currently available for sale with live stock and pricing data.",
-    emptyTitle: "No published products yet",
-    emptyBody: "Real products will appear here automatically when they are activated for sale.",
+    emptyTitle: "No products found",
+    emptyBody: "Change your search or check again later.",
+    searchLabel: "Search products",
+    searchPlaceholder: "Product name or description",
+    searchButton: "Search",
+    results: (count) => `${count} products`,
+    previous: "Previous",
+    next: "Next",
   },
   de: {
     eyebrow: "Katalog",
     title: "Produkte",
     body: "Entdecken Sie aktuell verfügbare Produkte mit Bestands- und Preisdaten.",
-    emptyTitle: "Noch keine veröffentlichten Produkte",
-    emptyBody: "Echte Produkte erscheinen hier automatisch, sobald sie für den Verkauf aktiviert werden.",
+    emptyTitle: "Keine Produkte gefunden",
+    emptyBody: "Ändern Sie Ihre Suche oder versuchen Sie es später erneut.",
+    searchLabel: "Produkte suchen",
+    searchPlaceholder: "Produktname oder Beschreibung",
+    searchButton: "Suchen",
+    results: (count) => `${count} Produkte`,
+    previous: "Zurück",
+    next: "Weiter",
   },
 };
 
@@ -41,29 +72,32 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: `${content.title} | ${siteName}`,
     description: content.body,
-    alternates: {
-      canonical: url,
-      languages: localeAlternates(pathname),
-    },
-    openGraph: {
-      type: "website",
-      siteName,
-      title: content.title,
-      description: content.body,
-      url,
-    },
+    alternates: { canonical: url, languages: localeAlternates(pathname) },
+    openGraph: { type: "website", siteName, title: content.title, description: content.body, url },
   };
+}
+
+function catalogHref(locale: Locale, query: string, page: number) {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (page > 1) params.set("page", String(page));
+  const suffix = params.toString();
+  return `/${locale}/products${suffix ? `?${suffix}` : ""}`;
 }
 
 export default async function ProductsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  const { q = "", page: pageParam = "1" } = await searchParams;
+  const requestedPage = /^\d+$/.test(pageParam) ? Number(pageParam) : 1;
   const content = copy[locale];
-  const products = await listStorefrontProducts(locale);
+  const result = await listStorefrontProductPage(locale, { query: q, page: requestedPage });
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -75,14 +109,38 @@ export default async function ProductsPage({
         </div>
       </section>
 
-      <section className="section" aria-live="polite">
+      <section className="section">
         <div className="container catalog-layout">
-          {products.length > 0 ? (
-            <div className="product-grid">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} locale={locale} />
-              ))}
-            </div>
+          <form className="catalog-toolbar" method="get" action={`/${locale}/products`}>
+            <label htmlFor="catalog-search" className="sr-only">{content.searchLabel}</label>
+            <input
+              id="catalog-search"
+              type="search"
+              name="q"
+              defaultValue={result.query}
+              placeholder={content.searchPlaceholder}
+              maxLength={100}
+            />
+            <button className="button button--secondary" type="submit">{content.searchButton}</button>
+          </form>
+
+          <p className="catalog-results" aria-live="polite">{content.results(result.total)}</p>
+
+          {result.items.length > 0 ? (
+            <>
+              <div className="product-grid">
+                {result.items.map((product, index) => (
+                  <ProductCard key={product.id} product={product} locale={locale} priority={index < 3} />
+                ))}
+              </div>
+              {result.totalPages > 1 && (
+                <nav className="pagination" aria-label={locale === "tr" ? "Katalog sayfaları" : locale === "de" ? "Katalogseiten" : "Catalog pages"}>
+                  {result.page > 1 ? <Link href={catalogHref(locale, result.query, result.page - 1)}>{content.previous}</Link> : <span />}
+                  <span aria-current="page">{result.page} / {result.totalPages}</span>
+                  {result.page < result.totalPages ? <Link href={catalogHref(locale, result.query, result.page + 1)}>{content.next}</Link> : <span />}
+                </nav>
+              )}
+            </>
           ) : (
             <div className="catalog-empty">
               <div className="catalog-empty__media" aria-hidden="true" />

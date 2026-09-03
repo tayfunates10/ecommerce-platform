@@ -12,7 +12,21 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecommerce
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ecommerce"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecommerce?schema=public
       NEXT_PUBLIC_SITE_URL: https://ci.example.invalid
@@ -24,17 +38,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Capture generated lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-package-lock
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 1
+      - name: Install dependencies from lockfile
+        run: npm ci --no-audit --no-fund
 
       - name: Generate Prisma client
         run: npm run db:generate
@@ -42,17 +49,29 @@ jobs:
       - name: Validate Prisma schema
         run: npm run db:validate
 
+      - name: Apply committed migrations to empty PostgreSQL
+        run: npm run db:migrate:deploy
+
+      - name: Assert database and Prisma schema have zero drift
+        run: npx prisma migrate diff --exit-code --from-config-datasource --to-schema prisma/schema.prisma
+
+      - name: Seed database-backed storefront audit fixture
+        run: bash tests/audit/fixtures/setup.sh
+
       - name: Lint
         run: npm run lint
 
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Test
+      - name: Unit and domain tests
         run: npm test
 
       - name: Production build
         run: npm run build
+
+      - name: Assert build leaves tracked files clean
+        run: git diff --exit-code -- .
 
       - name: Enforce performance budgets
         run: npm run perf:budget
@@ -63,6 +82,9 @@ jobs:
       - name: Browser E2E, accessibility and visual contracts
         run: npm run test:e2e
 
+      - name: Database-backed usage UI UX audit
+        run: npm run test:ux-audit
+
       - name: Upload browser certification evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,6 +92,7 @@ jobs:
           name: browser-certification
           path: |
             playwright-report
+            playwright-report-audit
             test-results
           if-no-files-found: warn
           retention-days: 7

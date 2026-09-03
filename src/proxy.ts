@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { defaultLocale, locales } from "./src/i18n/config";
+import { defaultLocale, locales } from "./i18n/config";
 
 const PUBLIC_FILE = /\.[^/]+$/;
 
@@ -18,13 +18,11 @@ export default function proxy(request: NextRequest) {
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
 
-  if (hasLocale) {
-    return NextResponse.next();
-  }
+  if (hasLocale) return NextResponse.next();
 
   const url = request.nextUrl.clone();
   url.pathname = `/${defaultLocale}${pathname === "/" ? "" : pathname}`;
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(url, 307);
 }
 
 export const config = {

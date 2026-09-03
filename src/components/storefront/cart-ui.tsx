@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/i18n/config";
-import { useCart } from "@/components/storefront/cart-provider";
+import { useCart, type CartLine } from "@/components/storefront/cart-provider";
 
 const copy = {
-  tr: { cart: "Sepet", empty: "Sepetiniz boş.", subtotal: "Ara toplam", close: "Sepeti kapat", remove: "Kaldır", add: "Sepete ekle", soldOut: "Stokta yok", quantity: "Adet" },
-  en: { cart: "Cart", empty: "Your cart is empty.", subtotal: "Subtotal", close: "Close cart", remove: "Remove", add: "Add to cart", soldOut: "Out of stock", quantity: "Quantity" },
-  de: { cart: "Warenkorb", empty: "Ihr Warenkorb ist leer.", subtotal: "Zwischensumme", close: "Warenkorb schließen", remove: "Entfernen", add: "In den Warenkorb", soldOut: "Nicht auf Lager", quantity: "Menge" },
+  tr: { cart: "Sepet", empty: "Sepetiniz boş.", subtotal: "Ara toplam", close: "Sepeti kapat", remove: "Kaldır", add: "Sepete ekle", soldOut: "Stokta yok", quantity: "Adet", checkout: "Ödemeye geç", itemUnit: "ürün" },
+  en: { cart: "Cart", empty: "Your cart is empty.", subtotal: "Subtotal", close: "Close cart", remove: "Remove", add: "Add to cart", soldOut: "Out of stock", quantity: "Quantity", checkout: "Checkout", itemUnit: "items" },
+  de: { cart: "Warenkorb", empty: "Ihr Warenkorb ist leer.", subtotal: "Zwischensumme", close: "Warenkorb schließen", remove: "Entfernen", add: "In den Warenkorb", soldOut: "Nicht auf Lager", quantity: "Menge", checkout: "Zur Kasse", itemUnit: "Artikel" },
 } satisfies Record<Locale, Record<string, string>>;
 
 function formatMoney(amount: number, currency: string, locale: Locale) {
@@ -19,7 +20,8 @@ export function CartButton({ locale }: { locale: Locale }) {
   const cart = useCart();
   return (
     <button className="cart-button" type="button" onClick={() => cart.setOpen(true)} aria-haspopup="dialog">
-      {copy[locale].cart} <span aria-hidden="true">({cart.count})</span><span className="sr-only"> {cart.count}</span>
+      {copy[locale].cart} <span aria-hidden="true">({cart.count})</span>
+      <span className="sr-only" aria-live="polite"> {cart.count} {copy[locale].itemUnit}</span>
     </button>
   );
 }
@@ -30,7 +32,7 @@ export function AddToCartButton({
   disabled = false,
 }: {
   locale: Locale;
-  item: { variantId: string; slug: string; name: string; sku: string; unitPrice: number; currency: string };
+  item: { variantId: string; slug: string; name: string; sku: string; unitPrice: number; currency: string; available: number };
   disabled?: boolean;
 }) {
   const cart = useCart();
@@ -46,6 +48,39 @@ export function AddToCartButton({
   );
 }
 
+function CartQuantityControl({ line, locale }: { line: CartLine; locale: Locale }) {
+  const cart = useCart();
+  const [draft, setDraft] = useState(String(line.quantity));
+
+  const commit = () => {
+    const parsed = Number(draft);
+    if (!draft.trim() || !Number.isFinite(parsed)) {
+      setDraft(String(line.quantity));
+      return;
+    }
+    const safe = Math.min(line.available, Math.max(1, Math.floor(parsed)));
+    cart.setQuantity(line.variantId, safe);
+    setDraft(String(safe));
+  };
+
+  return (
+    <input
+      aria-label={`${line.name}: ${copy[locale].quantity}`}
+      type="number"
+      inputMode="numeric"
+      min={1}
+      max={line.available}
+      step={1}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+      }}
+    />
+  );
+}
+
 export function CartDrawer({ locale }: { locale: Locale }) {
   const cart = useCart();
   const dialogRef = useRef<HTMLElement>(null);
@@ -55,6 +90,8 @@ export function CartDrawer({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!open) return;
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const shell = document.querySelector<HTMLElement>("[data-storefront-shell]");
+    shell?.setAttribute("inert", "");
     closeRef.current?.focus();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -84,6 +121,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
+      shell?.removeAttribute("inert");
       previouslyFocused?.focus();
     };
   }, [open, setOpen]);
@@ -111,14 +149,7 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                     <small>{line.sku}</small>
                   </div>
                   <div className="cart-line__controls">
-                    <input
-                      aria-label={`${line.name}: ${copy[locale].quantity}`}
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={line.quantity}
-                      onChange={(event) => cart.setQuantity(line.variantId, Number(event.target.value))}
-                    />
+                    <CartQuantityControl key={`${line.variantId}:${line.quantity}`} line={line} locale={locale} />
                     <span>{formatMoney(line.unitPrice * line.quantity, line.currency, locale)}</span>
                     <button type="button" className="text-button" onClick={() => cart.removeLine(line.variantId)}>{copy[locale].remove}</button>
                   </div>
@@ -131,6 +162,9 @@ export function CartDrawer({ locale }: { locale: Locale }) {
                 <strong>{formatMoney(cart.subtotal, cart.currency, locale)}</strong>
               </div>
             )}
+            <Link className="button button--primary cart-checkout" href={`/${locale}/checkout`} onClick={() => setOpen(false)}>
+              {copy[locale].checkout}
+            </Link>
           </>
         )}
       </aside>

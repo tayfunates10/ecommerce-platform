@@ -1,6 +1,7 @@
 import type { Locale } from "@/i18n/config";
 
 export const STOREFRONT_PRODUCT_LIMIT = 48;
+export const STOREFRONT_PAGE_SIZE = 24;
 
 type ProductReadRecord = {
   id: string;
@@ -40,6 +41,15 @@ export type StorefrontProduct = {
   variants: StorefrontVariant[];
 };
 
+export type StorefrontProductPage = {
+  items: StorefrontProduct[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  query: string;
+};
+
 const dbLocale: Record<Locale, "TR" | "EN" | "DE"> = { tr: "TR", en: "EN", de: "DE" };
 const preferredCurrency: Record<Locale, "TRY" | "USD" | "EUR"> = { tr: "TRY", en: "USD", de: "EUR" };
 
@@ -75,21 +85,73 @@ function serializeProduct(product: ProductReadRecord): StorefrontProduct | null 
   };
 }
 
-export async function listStorefrontProducts(locale: Locale): Promise<StorefrontProduct[]> {
-  if (!process.env.DATABASE_URL) return [];
-  const { db } = await import("@/lib/db");
-  const products = await db.product.findMany({
-    where: { status: "ACTIVE" }, orderBy: { updatedAt: "desc" }, take: STOREFRONT_PRODUCT_LIMIT,
-    include: {
-      translations: { where: { locale: dbLocale[locale] }, take: 1 },
-      media: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }], take: 1 },
-      variants: { where: { active: true }, orderBy: { createdAt: "asc" }, take: 1, include: {
+function productInclude(locale: Locale) {
+  return {
+    translations: { where: { locale: dbLocale[locale] }, take: 1 },
+    media: { orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }], take: 1 },
+    variants: {
+      where: { active: true },
+      orderBy: { createdAt: "asc" as const },
+      take: 1,
+      include: {
         inventory: true,
-        prices: { where: { currency: preferredCurrency[locale] }, orderBy: { validFrom: "desc" }, take: 1 },
-      } },
+        prices: { where: { currency: preferredCurrency[locale] }, orderBy: { validFrom: "desc" as const }, take: 1 },
+      },
     },
+  };
+}
+
+export async function listStorefrontProductPage(
+  locale: Locale,
+  options: { query?: string; page?: number; pageSize?: number } = {},
+): Promise<StorefrontProductPage> {
+  const query = (options.query ?? "").trim().slice(0, 100);
+  const requestedPage = Number.isSafeInteger(options.page) && (options.page ?? 0) > 0 ? Number(options.page) : 1;
+  const pageSize = Math.min(STOREFRONT_PRODUCT_LIMIT, Math.max(1, options.pageSize ?? STOREFRONT_PAGE_SIZE));
+
+  if (!process.env.DATABASE_URL) {
+    return { items: [], total: 0, page: 1, pageSize, totalPages: 1, query };
+  }
+
+  const { db } = await import("@/lib/db");
+  const translationWhere = query
+    ? {
+        locale: dbLocale[locale],
+        OR: [
+          { name: { contains: query, mode: "insensitive" as const } },
+          { description: { contains: query, mode: "insensitive" as const } },
+        ],
+      }
+    : { locale: dbLocale[locale] };
+  const where = {
+    status: "ACTIVE" as const,
+    translations: { some: translationWhere },
+  };
+
+  const total = await db.product.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, totalPages);
+  const products = await db.product.findMany({
+    where,
+    orderBy: { updatedAt: "desc" },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    include: productInclude(locale),
   });
-  return products.map(serializeProduct).filter((product): product is StorefrontProduct => product !== null);
+
+  return {
+    items: products.map(serializeProduct).filter((product): product is StorefrontProduct => product !== null),
+    total,
+    page,
+    pageSize,
+    totalPages,
+    query,
+  };
+}
+
+export async function listStorefrontProducts(locale: Locale): Promise<StorefrontProduct[]> {
+  const result = await listStorefrontProductPage(locale, { page: 1, pageSize: STOREFRONT_PRODUCT_LIMIT });
+  return result.items;
 }
 
 export async function getStorefrontProduct(locale: Locale, slug: string): Promise<StorefrontProduct | null> {

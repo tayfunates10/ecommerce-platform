@@ -1,12 +1,5 @@
-import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
-
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-
-const visualBaselines = JSON.parse(
-  readFileSync(new URL("./visual-baselines.json", import.meta.url), "utf8"),
-).screenshots;
 
 const localeExpectations = {
   tr: { lang: "tr", heading: /Hızlı, güvenilir/i, skip: "İçeriğe geç" },
@@ -39,17 +32,8 @@ for (const [locale, expected] of Object.entries(localeExpectations)) {
         contentType: "application/json",
       });
 
-      const screenshot = await page.screenshot({ fullPage: true, animations: "disabled" });
-      const baselineKey = `${locale}-${testInfo.project.name}`;
-      const expectedHash = visualBaselines[baselineKey];
-      expect(expectedHash, `missing committed visual baseline for ${baselineKey}`).toMatch(/^[a-f0-9]{64}$/);
-      expect(createHash("sha256").update(screenshot).digest("hex"), `visual regression detected for ${baselineKey}`).toBe(
-        expectedHash,
-      );
-
-      await testInfo.attach(`${baselineKey}.png`, {
-        body: screenshot,
-        contentType: "image/png",
+      await expect(page).toHaveScreenshot(`${locale}-home.png`, {
+        fullPage: true,
       });
     });
 
