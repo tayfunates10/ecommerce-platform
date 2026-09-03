@@ -1,0 +1,152 @@
+html {
+  scroll-padding-block-start: 5rem;
+}
+
+#main-content {
+  scroll-margin-block-start: 5rem;
+}
+
+.site-header a,
+.site-footer a,
+.locale-nav a,
+.text-link,
+.breadcrumb a,
+.pagination a,
+.text-button {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.4rem;
+}
+
+.text-button {
+  min-inline-size: 2.75rem;
+}
+
+.cart-line__controls input,
+.catalog-toolbar input {
+  min-block-size: 2.75rem;
+}
+
+.catalog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.catalog-toolbar input[type="search"] {
+  flex: 1 1 18rem;
+  min-inline-size: min(100%, 14rem);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding-inline: 1rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.catalog-results {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.pagination {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  margin-block-start: 1rem;
+}
+
+.pagination a:first-child {
+  justify-self: start;
+}
+
+.pagination a:last-child {
+  justify-self: end;
+}
+
+.breadcrumb {
+  margin-block-end: 0.5rem;
+}
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+}
+
+.breadcrumb li:not(:last-child)::after {
+  content: "/";
+  margin-inline: 0.35rem;
+  color: var(--muted);
+}
+
+.breadcrumb [aria-current="page"] {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.cart-checkout {
+  inline-size: 100%;
+  margin-block-start: 1.25rem;
+}
+
+.not-found-page__inner {
+  display: grid;
+  max-inline-size: 48rem;
+  gap: 1rem;
+}
+
+.not-found-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block-start: 0.5rem;
+}
+
+.button--secondary {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+@media (max-width: 28rem) {
+  html,
+  #main-content {
+    scroll-padding-block-start: 9rem;
+    scroll-margin-block-start: 9rem;
+  }
+
+  .catalog-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .catalog-toolbar input[type="search"],
+  .catalog-toolbar .button {
+    inline-size: 100%;
+  }
+
+  .pagination {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .pagination a:first-child,
+  .pagination a:last-child {
+    justify-self: start;
+  }
+}
