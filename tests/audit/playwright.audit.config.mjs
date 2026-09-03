@@ -1,8 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Standalone config for the usage/UI/UX audit suite.
-// It is deliberately kept out of `playwright.config.mjs` so that the Phase 9
-// certification gate in CI stays independent of this exploratory suite.
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined;
 const launchOptions = executablePath ? { executablePath } : undefined;
@@ -20,4 +17,18 @@ export default defineConfig({
     { name: "desktop-chromium", use: { ...devices["Desktop Chrome"], launchOptions } },
     { name: "mobile-chromium", use: { ...devices["Pixel 7"], launchOptions } },
   ],
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: "npm run start -- -H 127.0.0.1 -p 3000",
+        url: "http://127.0.0.1:3000/tr",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+        env: {
+          NEXT_PUBLIC_SITE_URL: "https://ci.example.invalid",
+          DATABASE_URL:
+            process.env.DATABASE_URL ??
+            "postgresql://postgres:postgres@127.0.0.1:5432/ecommerce?schema=public",
+        },
+      },
 });
