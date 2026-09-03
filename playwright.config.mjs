@@ -13,6 +13,7 @@ export default defineConfig({
   expect: {
     toHaveScreenshot: {
       animations: "disabled",
+      scale: "device",
       maxDiffPixelRatio: 0.01,
       threshold: 0.2,
     },
