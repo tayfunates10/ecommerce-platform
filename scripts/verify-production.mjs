@@ -1,4 +1,6 @@
 import { writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const REQUIRED_SECURITY_HEADERS = [
   "content-security-policy",
@@ -45,7 +47,7 @@ function isReservedHostname(hostname) {
   return false;
 }
 
-function normalizeOrigin(rawValue) {
+export function normalizeOrigin(rawValue) {
   const value = rawValue?.trim();
   if (!value) fail("PRODUCTION_URL is required.");
 
@@ -68,7 +70,7 @@ function normalizeOrigin(rawValue) {
   return url.origin;
 }
 
-function normalizeReleaseSha(rawValue) {
+export function normalizeReleaseSha(rawValue) {
   const value = rawValue?.trim();
   if (!value || !/^[0-9a-f]{40}$/i.test(value)) {
     fail("RELEASE_SHA must be the exact 40-character Git commit SHA being certified.");
@@ -76,11 +78,11 @@ function normalizeReleaseSha(rawValue) {
   return value.toLowerCase();
 }
 
-async function fetchOnce(url, label) {
+async function fetchOnce(url, label, fetchImpl = fetch) {
   try {
-    return await fetch(url, {
+    return await fetchImpl(url, {
       redirect: "manual",
-      headers: { "user-agent": "ecommerce-platform-production-certifier/1.2" },
+      headers: { "user-agent": "ecommerce-platform-production-certifier/1.3" },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
@@ -89,7 +91,7 @@ async function fetchOnce(url, label) {
   }
 }
 
-async function fetchChecked(url, label, expectedOrigin) {
+export async function fetchChecked(url, label, expectedOrigin, fetchImpl = fetch) {
   let currentUrl = new URL(url);
 
   for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
@@ -98,7 +100,7 @@ async function fetchChecked(url, label, expectedOrigin) {
       fail(`${label} redirected away from the certified production origin.`);
     }
 
-    const response = await fetchOnce(currentUrl, label);
+    const response = await fetchOnce(currentUrl, label, fetchImpl);
 
     if (REDIRECT_STATUSES.has(response.status)) {
       if (redirectCount === MAX_REDIRECTS) fail(`${label} exceeded ${MAX_REDIRECTS} redirects.`);
@@ -145,7 +147,7 @@ function normalizeHref(value, origin) {
   }
 }
 
-function assertSeoLinks(html, origin, locale) {
+export function assertSeoLinks(html, origin, locale) {
   const tags = getLinkTags(html);
   const canonicalTag = tags.find((tag) => /\brel=["']canonical["']/i.test(tag));
   const canonical = canonicalTag ? normalizeHref(getAttribute(canonicalTag, "href"), origin) : null;
@@ -178,7 +180,7 @@ function assertSeoLinks(html, origin, locale) {
   }
 }
 
-function assertSecurityHeaders(response, label) {
+export function assertSecurityHeaders(response, label) {
   for (const header of REQUIRED_SECURITY_HEADERS) {
     if (!response.headers.get(header)) fail(`${label} is missing security header ${header}.`);
   }
@@ -188,57 +190,93 @@ function assertSecurityHeaders(response, label) {
   }
 }
 
-const productionUrl = process.env.PRODUCTION_URL?.trim() || process.argv[2];
-const origin = normalizeOrigin(productionUrl);
-const releaseSha = normalizeReleaseSha(process.env.RELEASE_SHA);
-const evidenceOutput = process.env.RELEASE_EVIDENCE_OUTPUT?.trim() || null;
-const startedAt = new Date().toISOString();
-const checks = [];
-
-for (const locale of LOCALES) {
-  const url = `${origin}/${locale}`;
-  const response = await fetchChecked(url, `${locale} storefront`, origin);
-  assertSecurityHeaders(response, `${locale} storefront`);
-  const html = await response.text();
-  assertSeoLinks(html, origin, locale);
-  checks.push({ check: `storefront:${locale}`, status: "PASS", url });
-}
-
-const robotsUrl = `${origin}/robots.txt`;
-const robotsResponse = await fetchChecked(robotsUrl, "robots.txt", origin);
-assertSecurityHeaders(robotsResponse, "robots.txt");
-const robots = await robotsResponse.text();
-if (!robots.includes(`${origin}/sitemap.xml`)) {
-  fail("robots.txt does not advertise the production sitemap URL.");
-}
-checks.push({ check: "robots", status: "PASS", url: robotsUrl });
-
-const sitemapUrl = `${origin}/sitemap.xml`;
-const sitemapResponse = await fetchChecked(sitemapUrl, "sitemap.xml", origin);
-assertSecurityHeaders(sitemapResponse, "sitemap.xml");
-const sitemap = await sitemapResponse.text();
-for (const locale of LOCALES) {
-  if (!sitemap.includes(`${origin}/${locale}`)) {
-    fail(`sitemap.xml is missing the ${locale} storefront URL.`);
+export function assertReleaseIdentity(response, label, releaseSha) {
+  const deployedSha = response.headers.get("x-release-sha")?.trim().toLowerCase() ?? null;
+  if (deployedSha !== releaseSha) {
+    fail(`${label} release identity mismatch: expected ${releaseSha}, received ${deployedSha ?? "missing"}.`);
   }
 }
-checks.push({ check: "sitemap", status: "PASS", url: sitemapUrl });
 
-const evidence = {
-  schema: "ecommerce-production-public-smoke-v1",
-  decision: "PASS",
-  scope: "public-production-smoke-only",
-  releaseSha,
-  origin,
-  requestTimeoutMs: REQUEST_TIMEOUT_MS,
-  maxRedirects: MAX_REDIRECTS,
-  startedAt,
-  verifiedAt: new Date().toISOString(),
-  checks,
-};
+export async function runProductionVerification({
+  productionUrl,
+  releaseSha: releaseShaRaw,
+  evidenceOutput = null,
+  fetchImpl = fetch,
+} = {}) {
+  const origin = normalizeOrigin(productionUrl);
+  const releaseSha = normalizeReleaseSha(releaseShaRaw);
+  const startedAt = new Date().toISOString();
+  const checks = [];
 
-if (evidenceOutput) {
-  await writeFile(evidenceOutput, `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
+  for (const locale of LOCALES) {
+    const url = `${origin}/${locale}`;
+    const response = await fetchChecked(url, `${locale} storefront`, origin, fetchImpl);
+    assertSecurityHeaders(response, `${locale} storefront`);
+    assertReleaseIdentity(response, `${locale} storefront`, releaseSha);
+    const html = await response.text();
+    assertSeoLinks(html, origin, locale);
+    checks.push({ check: `storefront:${locale}`, status: "PASS", url });
+  }
+
+  const robotsUrl = `${origin}/robots.txt`;
+  const robotsResponse = await fetchChecked(robotsUrl, "robots.txt", origin, fetchImpl);
+  assertSecurityHeaders(robotsResponse, "robots.txt");
+  assertReleaseIdentity(robotsResponse, "robots.txt", releaseSha);
+  const robots = await robotsResponse.text();
+  if (!robots.includes(`${origin}/sitemap.xml`)) {
+    fail("robots.txt does not advertise the production sitemap URL.");
+  }
+  checks.push({ check: "robots", status: "PASS", url: robotsUrl });
+
+  const sitemapUrl = `${origin}/sitemap.xml`;
+  const sitemapResponse = await fetchChecked(sitemapUrl, "sitemap.xml", origin, fetchImpl);
+  assertSecurityHeaders(sitemapResponse, "sitemap.xml");
+  assertReleaseIdentity(sitemapResponse, "sitemap.xml", releaseSha);
+  const sitemap = await sitemapResponse.text();
+  for (const locale of LOCALES) {
+    if (!sitemap.includes(`${origin}/${locale}`)) {
+      fail(`sitemap.xml is missing the ${locale} storefront URL.`);
+    }
+  }
+  checks.push({ check: "sitemap", status: "PASS", url: sitemapUrl });
+
+  const evidence = {
+    schema: "ecommerce-production-public-smoke-v1",
+    decision: "PASS",
+    scope: "public-production-smoke-only",
+    releaseSha,
+    origin,
+    requestTimeoutMs: REQUEST_TIMEOUT_MS,
+    maxRedirects: MAX_REDIRECTS,
+    startedAt,
+    verifiedAt: new Date().toISOString(),
+    checks,
+  };
+
+  if (evidenceOutput) {
+    await writeFile(evidenceOutput, `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
+  }
+
+  return evidence;
 }
 
-console.log(JSON.stringify(evidence, null, 2));
+async function main() {
+  const productionUrl = process.env.PRODUCTION_URL?.trim() || process.argv[2];
+  const releaseSha = process.env.RELEASE_SHA;
+  const evidenceOutput = process.env.RELEASE_EVIDENCE_OUTPUT?.trim() || null;
+  const evidence = await runProductionVerification({ productionUrl, releaseSha, evidenceOutput });
+  console.log(JSON.stringify(evidence, null, 2));
+}
+
+const isDirectExecution = process.argv[1]
+  ? import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+  : false;
+
+if (isDirectExecution) {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
